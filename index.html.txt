@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2c7a7b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HACCP Crèche">
+<title>HACCP Micro-Crèche</title>
+<style>
+  :root {
+    --primary: #2c7a7b;
+    --primary-dark: #1e5a5b;
+    --danger: #c53030;
+    --warning: #dd6b20;
+    --success: #2f855a;
+    --bg: #f7fafc;
+    --card: #ffffff;
+    --text: #1a202c;
+    --muted: #718096;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); font-size: 16px; padding-bottom: 70px;
+  }
+  header {
+    background: var(--primary); color: white; padding: 14px 16px;
+    position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header .sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  .view { display: none; padding: 16px; }
+  .view.active { display: block; }
+
+  .card {
+    background: var(--card); border-radius: 10px; padding: 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .card h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+  .card .meta { font-size: 12px; color: var(--muted); }
+
+  label { display: block; font-size: 13px; font-weight: 500; margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 15px; background: white; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+  button {
+    background: var(--primary); color: white; border: none; padding: 12px 16px;
+    border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+    width: 100%; margin-top: 12px; font-family: inherit;
+  }
+  button:active { background: var(--primary-dark); }
+  button.secondary { background: var(--border); color: var(--text); }
+  button.danger { background: var(--danger); }
+  button.small { width: auto; padding: 6px 12px; font-size: 13px; margin: 0; }
+
+  .alert-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; margin-left: 8px;
+  }
+  .badge-ok { background: #c6f6d5; color: var(--success); }
+  .badge-warn { background: #feebc8; color: var(--warning); }
+  .badge-danger { background: #fed7d7; color: var(--danger); }
+
+  .list-item {
+    border-bottom: 1px solid var(--border); padding: 12px 0;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .info { flex: 1; min-width: 0; }
+  .list-item .title { font-weight: 600; font-size: 14px; }
+  .list-item .detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; background: white;
+    display: flex; border-top: 1px solid var(--border); z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; background: none; color: var(--muted); border: none;
+    padding: 10px 4px; font-size: 10px; font-weight: 500; margin: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  nav button.active { color: var(--primary); }
+  nav button .icon { font-size: 20px; line-height: 1; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; }
+  .tabs button { flex: 0 0 auto; background: white; color: var(--muted);
+    border: 1px solid var(--border); padding: 8px 14px; font-size: 13px; margin: 0; }
+  .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px 16px; font-size: 14px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat { background: white; border-radius: 10px; padding: 14px; text-align: center; }
+  .stat .num { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .stat.ok .num { color: var(--success); }
+  .stat.warn .num { color: var(--warning); }
+  .stat.danger .num { color: var(--danger); }
+
+  .hidden { display: none !important; }
+
+  .toast {
+    position: fixed; bottom: 80px; left: 16px; right: 16px;
+    background: var(--text); color: white; padding: 12px 16px;
+    border-radius: 8px; font-size: 14px; text-align: center;
+    z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="headerTitle">🍼 HACCP Micro-Crèche</h1>
+  <div class="sub" id="headerSub">Tableau de bord</div>
+</header>
+
+<!-- Vue Tableau de bord -->
+<div class="view active" id="view-dashboard">
+  <div class="stat-grid">
+    <div class="stat" id="statTemp"><div class="num">0</div><div class="lbl">Relevés aujourd'hui</div></div>
+    <div class="stat" id="statBib"><div class="num">0</div><div class="lbl">Biberons aujourd'hui</div></div>
+    <div class="stat danger" id="statAlerts"><div class="num">0</div><div class="lbl">Alertes</div></div>
+    <div class="stat" id="statChildren"><div class="num">0</div><div class="lbl">Enfants enregistrés</div></div>
+  </div>
+  <div class="card">
+    <h2>⚠️ Alertes en cours</h2>
+    <div id="alertsList"><div class="empty">Aucune alerte ✅</div></div>
+  </div>
+  <div class="card">
+    <h2>📊 Actions rapides</h2>
+    <button onclick="showView('temp'); openTempForm()">➕ Nouveau relevé de température</button>
+    <button onclick="showView('bib'); openBibForm()">➕ Enregistrer un biberon</button>
+    <button onclick="exportCSV()" class="secondary">📥 Exporter toutes les données (CSV)</button>
+  </div>
+</div>
+
+<!-- Vue Températures -->
+<div class="view" id="view-temp">
+  <div class="card">
+    <h2>🌡️ Relevés de température</h2>
+    <div class="tabs" id="tempTabs">
+      <button class="active" onclick="filterTemp('today')">Aujourd'hui</button>
+      <button onclick="filterTemp('week')">7 jours</button>
+      <button onclick="filterTemp('all')">Tout</button>
+    </div>
+    <button onclick="openTempForm()">➕ Nouveau relevé</button>
+  </div>
+  <div class="card" id="tempFormCard" style="display:none">
+    <h2 id="tempFormTitle">Nouveau relevé</h2>
+    <label>Équipement</label>
+    <select id="tempEquip"></select>
+    <label>Température mesurée (°C)</label>
+    <input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
+    <label>Opérateur</label>
+    <input type="text" id="tempOperator" placeholder="Votre prénom">
+    <label>Action corrective (si hors norme)</label>
+    <textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
+    <button onclick="saveTemp()">💾 Enregistrer</button>
+    <button onclick="closeTempForm()" class="secondary">Annuler</button>
+  </div>
+  <div class="card">
+    <h2>Historique</h2>
+    <div id="tempList"></div>
+  </div>
+</div>
+
+<!-- Vue Biberonnerie -->
+<div class="view" id="view-bib">
+  <div class="card">
+    <h2>🍼 Biberonnerie</h2>
+    <div class="tabs" id="bibTabs">
+      <button class="active" onclick="filterBib('today')">Aujourd'hui</button>
+      <button onclick="filterBib('week')">7 jours</button>
+      <button onclick="filterBib('all')">Tout</button>
+    </div>
+    <button onclick="openBibForm()">➕ Nouveau biberon</button>
+  </div>
+  <div class="card" id="bibFormCard" style="display:none">
+    <h2>Enregistrer un biberon</h2>
+    <label>Enfant</label>
+    <select id="bibChild"></select>
+    <label>Lot de lait</label>
+    <input type="text" id="bibLot" placeholder="ex: L2024-012">
+    <label>DLC du lait (30 jours après ouverture)</label>
+    <input type="date" id="bibDLC">
+    <label>Température de l'eau (°C) — doit être ≥ 70°C</label>
+    <input type="number" id="bibWaterTemp" step="1" inputmode="decimal" placeholder="ex: 72">
+    <label>Heure de préparation</label>
+    <input type="time" id="bibPrepTime">
+    <label>Opérateur</label>
+    <input type="text" id="bibOperator" placeholder="Votre prénom">
+    <button onclick="saveBib()">💾 Enregistrer</button>
+    <button onclick="closeBibForm()" class="secondary">Annuler</button>
+  </div>
+  <div class="card">
+    <h2>Historique</h2>
+    <div id="bibList"></div>
+  </div>
+</div>
+
+<!-- Vue Enfants / Allergènes -->
+<div class="view" id="view-children">
+  <div class="card">
+    <h2>👶 Enfants & Allergènes</h2>
+    <button onclick="openChildForm()">➕ Ajouter un enfant</button>
+  </div>
+  <div class="card" id="childFormCard" style="display:none">
+    <h2 id="childFormTitle">Ajouter un enfant</h2>
+    <label>Prénom (ou initiale)</label>
+    <input type="text" id="childName" placeholder="ex: Léa M.">
+    <label>Groupe</label>
+    <input type="text" id="childGroup" placeholder="ex: Bébés, Moyens, Grands">
+    <label>Allergènes / PAI</label>
+    <textarea id="childAllergens" rows="2" placeholder="ex: Protéines de lait de vache, arachide…"></textarea>
+    <label>Notes</label>
+    <textarea id="childNotes" rows="2" placeholder="Optionnel"></textarea>
+    <button onclick="saveChild()">💾 Enregistrer</button>
+    <button onclick="closeChildForm()" class="secondary">Annuler</button>
+  </div>
+  <div class="card">
+    <h2>Liste des enfants</h2>
+    <div id="childList"></div>
+  </div>
+</div>
+
+<!-- Vue Plats témoins -->
+<div class="view" id="view-samples">
+  <div class="card">
+    <h2>🍽️ Plats témoins</h2>
+    <p class="meta">Prélever 80–100g par plat, conserver 0–3°C pendant 5 jours.</p>
+    <button onclick="openSampleForm()">➕ Nouveau plat témoin</button>
+  </div>
+  <div class="card" id="sampleFormCard" style="display:none">
+    <h2>Enregistrer un plat témoin</h2>
+    <label>Date du repas</label>
+    <input type="date" id="sampleDate">
+    <label>Plat</label>
+    <input type="text" id="sampleDish" placeholder="ex: Purée carottes">
+    <label>Quantité prélevée (g)</label>
+    <input type="number" id="sampleQty" placeholder="ex: 100" inputmode="numeric">
+    <label>Emplacement de stockage</label>
+    <input type="text" id="sampleLocation" placeholder="ex: Frigo témoins étagère 2">
+    <label>Opérateur</label>
+    <input type="text" id="sampleOperator" placeholder="Votre prénom">
+    <button onclick="saveSample()">💾 Enregistrer</button>
+    <button onclick="closeSampleForm()" class="secondary">Annuler</button>
+  </div>
+  <div class="card">
+    <h2>Historique</h2>
+    <div id="sampleList"></div>
+  </div>
+</div>
+
+<!-- Vue Nettoyage -->
+<div class="view" id="view-cleaning">
+  <div class="card">
+    <h2>🧽 Plan de nettoyage</h2>
+    <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
+  </div>
+  <div class="card" id="cleanFormCard" style="display:none">
+    <h2>Enregistrer un nettoyage</h2>
+    <label>Zone</label>
+    <select id="cleanZone">
+      <option>Biberonnerie</option>
+      <option>Zone de change</option>
+      <option>Cuisine</option>
+      <option>Réfectoire</option>
+      <option>Dortoir</option>
+      <option>Sanitaires</option>
+      <option>Salle de jeu</option>
+    </select>
+    <label>Tâche réalisée</label>
+    <input type="text" id="cleanTask" placeholder="ex: Désinfection des plans de travail">
+    <label>Opérateur</label>
+    <input type="text" id="cleanOperator" placeholder="Votre prénom">
+    <button onclick="saveClean()">💾 Enregistrer</button>
+    <button onclick="closeCleanForm()" class="secondary">Annuler</button>
+  </div>
+  <div class="card">
+    <h2>Historique</h2>
+    <div id="cleanList"></div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<nav>
+  <button class="active" data-view="dashboard" onclick="showView('dashboard')">
+    <span class="icon">📊</span>Accueil
+  </button>
+  <button data-view="temp" onclick="showView('temp')">
+    <span class="icon">🌡️</span>Températures
+  </button>
+  <button data-view="bib" onclick="showView('bib')">
+    <span class="icon">🍼</span>Biberons
+  </button>
+  <button data-view="children" onclick="showView('children')">
+    <span class="icon">👶</span>Enfants
+  </button>
+  <button data-view="samples" onclick="showView('samples')">
+    <span class="icon">🍽️</span>Témoins
+  </button>
+  <button data-view="cleaning" onclick="showView('cleaning')">
+    <span class="icon">🧽</span>Nettoyage</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ DONNÉES PAR DÉFAUT ============
+const DEFAULT_EQUIPMENT = [
+  { name: "Frigo cuisine", type: "frigo", min: 0, max: 4 },
+  { name: "Frigo biberonnerie", type: "frigo", min: 0, max: 4 },
+  { name: "Congélateur", type: "congel", min: -18, max: -15 },
+  { name: "Frigo plats témoins", type: "frigo", min: 0, max: 3 }
+];
+
+// ============ STOCKAGE ============
+function load(key, def) {
+  try { return JSON.parse(localStorage.getItem('haccp_' + key)) || def; }
+  catch { return def; }
+}
+function save(key, val) {
+  localStorage.setItem('haccp_' + key, JSON.stringify(val));
+}
+
+let state = {
+  temps: load('temps', []),
+  bibs: load('bibs', []),
+  children: load('children', []),
+  samples: load('samples', []),
+  cleans: load('cleans', []),
+  equipment: load('equipment', DEFAULT_EQUIPMENT)
+};
+
+// ============ UTILITAIRES ============
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function nowTime() { return new Date().toTimeString().slice(0,5); }
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+}
+function startOfToday() {
+  const d = new Date(); d.setHours(0,0,0,0); return d.getTime();
+}
+function startOfWeek() {
+  const d = new Date(); d.setDate(d.getDate()-7); d.setHours(0,0,0,0); return d.getTime();
+}
+
+// ============ NAVIGATION ============
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
+  const titles = {
+    dashboard: ['🍼 HACCP Micro-Crèche', 'Tableau de bord'],
+    temp: ['🌡️ Températures', 'Relevés des équipements'],
+    bib: ['🍼 Biberonnerie', 'Traçabilité des biberons'],
+    children: ['👶 Enfants', 'Allergènes et PAI'],
+    samples: ['🍽️ Plats témoins', 'Conservation 5 jours'],
+    cleaning: ['🧽 Nettoyage', 'Plan de nettoyage']
+  };
+  document.getElementById('headerTitle').textContent = titles[name][0];
+  document.getElementById('headerSub').textContent = titles[name][1];
+  renderAll();
+}
+
+// ============ RENDU ============
+function renderAll() {
+  renderDashboard();
+  renderTemp();
+  renderBib();
+  renderChildren();
+  renderSamples();
+  renderCleans();
+}
+
+function renderDashboard() {
+  const today = startOfToday();
+  const tempsToday = state.temps.filter(t => new Date(t.ts).getTime() >= today).length;
+  const bibsToday = state.bibs.filter(b => new Date(b.ts).getTime() >= today).length;
+
+  const alerts = [];
+  const now = Date.now();
+  const h = 3600 * 1000;
+
+  state.bibs.forEach(b => {
+    if (!b.consumed && new Date(b.ts).getTime() >= today) {
+      const elapsed = now - new Date(b.ts).getTime();
+      if (elapsed > h) {
+        alerts.push(`🍼 Biberon de ${b.childName} préparé il y a ${Math.floor(elapsed/h)}h — à jeter`);
+      } else if (elapsed > h * 0.75) {
+        alerts.push(`🍼 Biberon de ${b.childName} : ${Math.floor((h - elapsed)/60000)} min restantes`);
+      }
+    }
+  });
+
+  state.temps.forEach(t => {
+    if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange && !t.resolved) {
+      alerts.push(`🌡️ ${t.equipName} : ${t.value}°C (hors norme le ${fmtDate(t.ts)})`);
+    }
+  });
+
+  state.samples.forEach(s => {
+    if (now - new Date(s.ts).getTime() > 5*24*h) {
+      alerts.push(`🍽️ Plat témoin "${s.dish}" : à retirer (${fmtDate(s.ts)})`);
+    }
+  });
+
+  document.getElementById('statTemp').querySelector('.num').textContent = tempsToday;
+  document.getElementById('statBib').querySelector('.num').textContent = bibsToday;
+  document.getElementById('statAlerts').querySelector('.num').textContent = alerts.length;
+  document.getElementById('statChildren').querySelector('.num').textContent = state.children.length;
+
+  const list = document.getElementById('alertsList');
+  if (alerts.length === 0) {
+    list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
+  } else {
+    list.innerHTML = alerts.map(a => `<div class="list-item"><div class="info"><div class="title">${a}</div></div></div>`).join('');
+  }
+}
+
+let tempFilter = 'today';
+function filterTemp(f) {
+  tempFilter = f;
+  document.querySelectorAll('#tempTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f));
+  renderTemp();
+}
+
+function renderTemp() {
+  const now = Date.now();
+  let filtered = state.temps;
+  if (tempFilter === 'today') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfToday());
+  if (tempFilter === 'week') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfWeek());
+
+  const list = document.getElementById('tempList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">Aucun relevé</div>';
+    return;
+  }
+  list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(t => {
+    const badge = t.outOfRange
+      ? `<span class="alert-badge badge-danger">HORS NORME</span>`
+      : `<span class="alert-badge badge-ok">OK</span>`;
+    return `<div class="list-item">
+      <div class="info">
+        <div class="title">${t.equipName} — ${t.value}°C ${badge}</div>
+        <div class="detail">${fmtDate(t.ts)} • ${t.operator}${t.action ? ' • Action: ' + t.action : ''}</div>
+      </div>
+      <button class="small danger" onclick="deleteTemp('${t.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function openTempForm() {
+  document.getElementById('tempFormCard').style.display = 'block';
+  const sel = document.getElementById('tempEquip');
+  sel.innerHTML = state.equipment.map(e => `<option value="${e.name}">${e.name} (${e.min}°C à ${e.max}°C)</option>`).join('');
+  document.getElementById('tempValue').value = '';
+  document.getElementById('tempOperator').value = '';
+  document.getElementById('tempAction').value = '';
+  document.getElementById('tempFormCard').scrollIntoView({behavior:'smooth'});
+}
+function closeTempForm() { document.getElementById('tempFormCard').style.display = 'none'; }
+
+function saveTemp() {
+  const equipName = document.getElementById('tempEquip').value;
+  const value = parseFloat(document.getElementById('tempValue').value);
+  const operator = document.getElementById('tempOperator').value.trim();
+  const action = document.getElementById('tempAction').value.trim();
+  if (isNaN(value)) return toast('⚠️ Entrez une température valide');
+  if (!operator) return toast('⚠️ Indiquez votre prénom');
+  const equip = state.equipment.find(e => e.name === equipName);
+  const outOfRange = value < equip.min || value > equip.max;
+  state.temps.push({
+    id: uid(), ts: new Date().toISOString(), equipName, value,
+    operator, action, outOfRange, resolved: !outOfRange
+  });
+  save('temps', state.temps);
+  toast(outOfRange ? '⚠️ Relevé enregistré (hors norme !)' : '✅ Relevé enregistré');
+  closeTempForm();
+  renderAll();
+}
+function deleteTemp(id) {
+  if (!confirm('Supprimer ce relevé ?')) return;
+  state.temps = state.temps.filter(t => t.id !== id);
+  save('temps', state.temps); renderAll();
+}
+
+// ============ BIBERONS ============
+let bibFilter = 'today';
+function filterBib(f) {
+  bibFilter = f;
+  document.querySelectorAll('#bibTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f));
+  renderBib();
+}
+function renderBib() {
+  const now = Date.now(); const h = 3600*1000;
+  let filtered = state.bibs;
+  if (bibFilter === 'today') filtered = filtered.filter(b => new Date(b.ts).getTime() >= startOfToday());
+  if (bibFilter === 'week') filtered = filtered.filter(b => new Date(b.ts).getTime() >= startOfWeek());
+  const list = document.getElementById('bibList');
+  if (filtered.length === 0) { list.innerHTML = '<div class="empty">Aucun biberon</div>'; return; }
+  list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(b => {
+    const elapsed = now - new Date(b.ts).getTime();
+    let badge = '<span class="alert-badge badge-ok">OK</span>';
+    if (!b.consumed && elapsed > h) badge = '<span class="alert-badge badge-danger">À JETER (>1h)</span>';
+    else if (!b.consumed) badge = `<span class="alert-badge badge-warn">${Math.floor((h-elapsed)/60000)} min</span>`;
+    const waterWarn = b.waterTemp < 70 ? '<span class="alert-badge badge-danger">Eau <70°C</span>' : '';
+    return `<div class="list-item">
+      <div class="info">
+        <div class="title">${b.childName} ${badge}${waterWarn}</div>
+        <div class="detail">${fmtDate(b.ts)} • Lot ${b.milkLot} • Eau ${b.waterTemp}°C • ${b.operator}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        ${!b.consumed ? `<button class="small" onclick="consumeBib('${b.id}')">✓</button>` : ''}
+        <button class="small danger" onclick="deleteBib('${b.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openBibForm() {
+  document.getElementById('bibFormCard').style.display = 'block';
+  const sel = document.getElementById('bibChild');
+  sel.innerHTML = '<option value="">— Sélectionner —</option>' +
+    state.children.map(c => `<option value="${c.id}">${c.name}</option>`).join('') +
+    '<option value="__other">Autre (saisir)</option>';
+  document.getElementById('bibLot').value = '';
+  document.getElementById('bibDLC').value = '';
+  document.getElementById('bibWaterTemp').value = '';
+  document.getElementById('bibPrepTime').value = nowTime();
+  document.getElementById('bibOperator').value = '';
+  document.getElementById('bibFormCard').scrollIntoView({behavior:'smooth'});
+}
+function closeBibForm() { document.getElementById('bibFormCard').style.display = 'none'; }
+function saveBib() {
+  let childId = document.getElementById('bibChild').value;
+  let childName = '';
+  if (childId === '__other') {
+    childName = prompt('Prénom de l\'enfant ?') || 'Inconnu';
+  } else {
+    const c = state.children.find(c => c.id === childId);
+    childName = c ? c.name : 'Inconnu';
+  }
+  const lot = document.getElementById('bibLot').value.trim();
+  const dlc = document.getElementById('bibDLC').value;
+  const waterTemp = parseFloat(document.getElementById('bibWaterTemp').value);
+  const prepTime = document.getElementById('bibPrepTime').value || nowTime();
+  const operator = document.getElementById('bibOperator').value.trim();
+  if (!childName) return toast('⚠️ Sélectionnez un enfant');
+  if (!lot) return toast('⚠️ Indiquez le lot de lait');
+  if (isNaN(waterTemp)) return toast('⚠️ Indiquez la température de l\'eau');
+  if (!operator) return toast('⚠️ Indiquez votre prénom');
+  const now = new Date();
+  const [hh, mm] = prepTime.split(':');
+  now.setHours(parseInt(hh), parseInt(mm), 0, 0);
+  state.bibs.push({
+    id: uid(), ts: now.toISOString(), childName, milkLot: lot, milkDLC: dlc,
+    waterTemp, operator, consumed: false
+  });
+  save('bibs', state.bibs);
+  toast(waterTemp < 70 ? '⚠️ Biberon enregistré (eau <70°C !)' : '✅ Biberon enregistré');
+  closeBibForm(); renderAll();
+}
+function consumeBib(id) {
+  const b = state.bibs.find(b => b.id === id);
+  if (b) { b.consumed = true; save('bibs', state.bibs); toast('✅ Biberon marqué consommé'); renderAll(); }
+}
+function deleteBib(id) {
+  if (!confirm('Supprimer ce biberon ?')) return;
+  state.bibs = state.bibs.filter(b => b.id !== id);
+  save('bibs', state.bibs); renderAll();
+}
+
+// ============ ENFANTS ============
+function renderChildren() {
+  const list = document.getElementById('childList');
+  if (state.children.length === 0) {
+    list.innerHTML = '<div class="empty">Aucun enfant enregistré</div>'; return;
+  }
+  list.innerHTML = state.children.map(c => `
+    <div class="list-item">
+      <div class="info">
+        <div class="title">${c.name} ${c.group ? '<span class="alert-badge badge-ok">'+c.group+'</span>' : ''}</div>
+        <div class="detail">${c.allergens ? '⚠️ ' + c.allergens : 'Aucun allergène'}</div>
+      </div>
+      <button class="small danger" onclick="deleteChild('${c.id}')">✕</button>
+    </div>
+  `).join('');
+}
+function openChildForm() {
+  document.getElementById('childFormCard').style.display = 'block';
+  document.getElementById('childName').value = '';
+  document.getElementById('childGroup').value = '';
+  document.getElementById('childAllergens').value = '';
+  document.getElementById('childNotes').value = '';
+  document.getElementById('childFormCard').scrollIntoView({behavior:'smooth'});
+}
+function closeChildForm() { document.getElementById('childFormCard').style.display = 'none'; }
+function saveChild() {
+  const name = document.getElementById('childName').value.trim();
+  if (!name) return toast('⚠️ Indiquez un prénom');
+  state.children.push({
+    id: uid(), name,
+    group: document.getElementById('childGroup').value.trim(),
+    allergens: document.getElementById('childAllergens').value.trim(),
+    notes: document.getElementById('childNotes').value.trim()
+  });
+  save('children', state.children);
+  toast('✅ Enfant ajouté');
+  closeChildForm(); renderAll();
+}
+function deleteChild(id) {
+  if (!confirm('Supprimer cet enfant ?')) return;
+  state.children = state.children.filter(c => c.id !== id);
+  save('children', state.children); renderAll();
+}
+
+// ============ PLATS TÉMOINS ============
+function renderSamples() {
+  const list = document.getElementById('sampleList');
+  if (state.samples.length === 0) {
+    list.innerHTML = '<div class="empty">Aucun plat témoin</div>'; return;
+  }
+  const now = Date.now();
+  list.innerHTML = state.samples.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(s => {
+    const days = Math.floor((now - new Date(s.ts).getTime()) / (24*3600*1000));
+    const badge = days > 5 ? '<span class="alert-badge badge-danger">À RETIRER</span>' : `<span class="alert-badge badge-ok">J+${days}</span>`;
+    return `<div class="list-item">
+      <div class="info">
+        <div class="title">${s.dish} ${badge}</div>
+        <div class="detail">${fmtDate(s.ts)} • ${s.qty}g • ${s.location} • ${s.operator}</div>
+      </div>
+      <button class="small danger" onclick="deleteSample('${s.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+function openSampleForm() {
+  document.getElementById('sampleFormCard').style.display = 'block';
+  document.getElementById('sampleDate').value = todayStr();
+  document.getElementById('sampleDish').value = '';
+  document.getElementById('sampleQty').value = '100';
+  document.getElementById('sampleLocation').value = '';
+  document.getElementById('sampleOperator').value = '';
+  document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'});
+}
+function closeSampleForm() { document.getElementById('sampleFormCard').style.display = 'none'; }
+function saveSample() {
+  const dateStr = document.getElementById('sampleDate').value;
+  const dish = document.getElementById('sampleDish').value.trim();
+  const qty = parseInt(document.getElementById('sampleQty').value);
+  const location = document.getElementById('sampleLocation').value.trim();
+  const operator = document.getElementById('sampleOperator').value.trim();
+  if (!dish) return toast('⚠️ Indiquez le plat');
+  if (isNaN(qty) || qty <= 0) return toast('⚠️ Indiquez la quantité');
+  if (!operator) return toast('⚠️ Indiquez votre prénom');
+  state.samples.push({
+    id: uid(), ts: new Date(dateStr + 'T12:00').toISOString(),
+    dish, qty, location, operator
+  });
+  save('samples', state.samples);
+  toast('✅ Plat témoin enregistré');
+  closeSampleForm(); renderAll();
+}
+function deleteSample(id) {
+  if (!confirm('Supprimer ce plat témoin ?')) return;
+  state.samples = state.samples.filter(s => s.id !== id);
+  save('samples', state.samples); renderAll();
+}
+
+// ============ NETTOYAGE ============
+function renderCleans() {
+  const list = document.getElementById('cleanList');
+  if (state.cleans.length === 0) {
+    list.innerHTML = '<div class="empty">Aucun nettoyage enregistré</div>'; return;
+  }
+  list.innerHTML = state.cleans.sort((a,b) => new Date(b.ts) - new Date(a.ts)).slice(0, 50).map(c => `
+    <div class="list-item">
+      <div class="info">
+        <div class="title">${c.zone} — ${c.task}</div>
+        <div class="detail">${fmtDate(c.ts)} • ${c.operator}</div>
+      </div>
+      <button class="small danger" onclick="deleteClean('${c.id}')">✕</button>
+    </div>
+  `).join('');
+}
+function openCleanForm() {
+  document.getElementById('cleanFormCard').style.display = 'block';
+  document.getElementById('cleanTask').value = '';
+  document.getElementById('cleanOperator').value = '';
+  document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'});
+}
+function closeCleanForm() { document.getElementById('cleanFormCard').style.display = 'none'; }
+function saveClean() {
+  const zone = document.getElementById('cleanZone').value;
+  const task = document.getElementById('cleanTask').value.trim();
+  const operator = document.getElementById('cleanOperator').value.trim();
+  if (!task) return toast('⚠️ Indiquez la tâche');
+  if (!operator) return toast('⚠️ Indiquez votre prénom');
+  state.cleans.push({ id: uid(), ts: new Date().toISOString(), zone, task, operator });
+  save('cleans', state.cleans);
+  toast('✅ Nettoyage enregistré');
+  closeCleanForm(); renderAll();
+}
+function deleteClean(id) {
+  if (!confirm('Supprimer ce nettoyage ?')) return;
+  state.cleans = state.cleans.filter(c => c.id !== id);
+  save('cleans', state.cleans); renderAll();
+}
+
+// ============ EXPORT CSV ============
+function exportCSV() {
+  const rows = [['Type', 'Date', 'Détail']];
+  state.temps.forEach(t => rows.push(['Température', t.ts, `${t.equipName}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}${t.action?' - '+t.action:''}`]));
+  state.bibs.forEach(b => rows.push(['Biberon', b.ts, `${b.childName} - Lot ${b.milkLot} - Eau ${b.waterTemp}°C - ${b.consumed?'Consommé':'Non consommé'} - ${b.operator}`]));
+  state.children.forEach(c => rows.push(['Enfant', '-', `${c.name} (${c.group}) - Allergènes: ${c.allergens||'aucun'}`]));
+  state.samples.forEach(s => rows.push(['Plat témoin', s.ts, `${s.dish} - ${s.qty}g - ${s.location} - ${s.operator}`]));
+  state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `haccp-microcreche-${todayStr()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('📥 Export CSV téléchargé');
+}
+
+// ============ INIT ============
+renderAll();
+</script>
+</body>
+</html>
