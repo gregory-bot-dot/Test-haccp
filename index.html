@@ -49,6 +49,7 @@
     border-radius: 8px; font-size: 15px; background: white; font-family: inherit;
   }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+  input[type="file"] { padding: 8px; font-size: 14px; }
 
   button {
     background: var(--primary); color: white; border: none; padding: 12px 16px;
@@ -76,6 +77,8 @@
   .list-item .info { flex: 1; min-width: 0; }
   .list-item .title { font-weight: 600; font-size: 14px; }
   .list-item .detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  
+  .photo-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); }
 
   nav {
     position: fixed; bottom: 0; left: 0; right: 0; background: white;
@@ -105,8 +108,6 @@
   .stat.warn .num { color: var(--warning); }
   .stat.danger .num { color: var(--danger); }
 
-  .hidden { display: none !important; }
-
   .toast {
     position: fixed; bottom: 80px; left: 16px; right: 16px;
     background: var(--text); color: white; padding: 12px 16px;
@@ -126,7 +127,7 @@
 <!-- Vue Tableau de bord -->
 <div class="view active" id="view-dashboard">
   <div class="stat-grid">
-    <div class="stat" id="statTemp"><div class="num">0</div><div class="lbl">Relevés aujourd'hui</div></div>
+    <div class="stat" id="statTemp"><div class="num">0</div><div class="lbl">Contrôles aujourd'hui</div></div>
     <div class="stat" id="statBib"><div class="num">0</div><div class="lbl">Biberons aujourd'hui</div></div>
     <div class="stat danger" id="statAlerts"><div class="num">0</div><div class="lbl">Alertes</div></div>
     <div class="stat" id="statChildren"><div class="num">0</div><div class="lbl">Enfants enregistrés</div></div>
@@ -137,36 +138,78 @@
   </div>
   <div class="card">
     <h2>📊 Actions rapides</h2>
-    <button onclick="showView('temp'); openTempForm()">➕ Nouveau relevé de température</button>
+    <button onclick="showView('temp'); openTempForm()">➕ Nouveau contrôle température</button>
     <button onclick="showView('bib'); openBibForm()">➕ Enregistrer un biberon</button>
     <button onclick="exportCSV()" class="secondary">📥 Exporter toutes les données (CSV)</button>
   </div>
 </div>
 
-<!-- Vue Températures -->
+<!-- Vue Températures & Contrôles -->
 <div class="view" id="view-temp">
   <div class="card">
-    <h2>🌡️ Relevés de température</h2>
+    <h2>🌡️ Contrôles & Températures</h2>
     <div class="tabs" id="tempTabs">
       <button class="active" onclick="filterTemp('today')">Aujourd'hui</button>
       <button onclick="filterTemp('week')">7 jours</button>
       <button onclick="filterTemp('all')">Tout</button>
     </div>
-    <button onclick="openTempForm()">➕ Nouveau relevé</button>
+    <button onclick="openTempForm()">➕ Nouveau contrôle</button>
   </div>
+  
   <div class="card" id="tempFormCard" style="display:none">
-    <h2 id="tempFormTitle">Nouveau relevé</h2>
-    <label>Équipement</label>
-    <select id="tempEquip"></select>
+    <h2 id="tempFormTitle">Nouveau contrôle</h2>
+    
+    <label>Type de contrôle</label>
+    <select id="tempType" onchange="updateTempFields()">
+      <option value="daily">🌡️ Température quotidienne (Frigo)</option>
+      <option value="delivery">🚚 Réception livraison</option>
+      <option value="preheat">🍲 Contrôle avant chauffe</option>
+      <option value="reheat">🔥 Contrôle remise en chauffe</option>
+    </select>
+
+    <!-- Champs spécifiques : Quotidien -->
+    <div id="fields-daily">
+      <label>Équipement</label>
+      <select id="tempEquip"></select>
+    </div>
+
+    <!-- Champs spécifiques : Livraison -->
+    <div id="fields-delivery" style="display:none">
+      <label>Fournisseur</label>
+      <input type="text" id="tempSupplier" placeholder="ex: Pomona, BioFrais...">
+      <label>Type de produit</label>
+      <select id="tempProductType">
+        <option value="frais">Frais (≤ 4°C)</option>
+        <option value="surgelé">Surgelé (≤ -18°C)</option>
+        <option value="sec">Épicerie sèche</option>
+      </select>
+    </div>
+
+    <!-- Champs spécifiques : Avant / Remise en chauffe -->
+    <div id="fields-dish" style="display:none">
+      <label>Nom du plat</label>
+      <input type="text" id="tempDish" placeholder="ex: Purée de carottes">
+    </div>
+
+    <!-- Champ commun : Température -->
     <label>Température mesurée (°C)</label>
     <input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
+    
+    <p class="meta" id="tempInstruction" style="margin-top: 4px; color: var(--muted); font-size: 12px;"></p>
+
     <label>Opérateur</label>
     <input type="text" id="tempOperator" placeholder="Votre prénom">
+    
     <label>Action corrective (si hors norme)</label>
     <textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
+
+    <label>📸 Ajouter une photo (optionnel)</label>
+    <input type="file" id="tempPhoto" accept="image/*" capture="environment">
+
     <button onclick="saveTemp()">💾 Enregistrer</button>
     <button onclick="closeTempForm()" class="secondary">Annuler</button>
   </div>
+
   <div class="card">
     <h2>Historique</h2>
     <div id="tempList"></div>
@@ -297,7 +340,7 @@
     <span class="icon">📊</span>Accueil
   </button>
   <button data-view="temp" onclick="showView('temp')">
-    <span class="icon">🌡️</span>Températures
+    <span class="icon">🌡️</span>Contrôles
   </button>
   <button data-view="bib" onclick="showView('bib')">
     <span class="icon">🍼</span>Biberons
@@ -309,7 +352,8 @@
     <span class="icon">🍽️</span>Témoins
   </button>
   <button data-view="cleaning" onclick="showView('cleaning')">
-    <span class="icon">🧽</span>Nettoyage</button>
+    <span class="icon">🧽</span>Nettoyage
+  </button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -329,7 +373,12 @@ function load(key, def) {
   catch { return def; }
 }
 function save(key, val) {
-  localStorage.setItem('haccp_' + key, JSON.stringify(val));
+  try {
+    localStorage.setItem('haccp_' + key, JSON.stringify(val));
+  } catch (e) {
+    toast("⚠️ Mémoire pleine ! Exportez le CSV.");
+    console.error(e);
+  }
 }
 
 let state = {
@@ -346,7 +395,7 @@ function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
@@ -362,6 +411,28 @@ function startOfWeek() {
   const d = new Date(); d.setDate(d.getDate()-7); d.setHours(0,0,0,0); return d.getTime();
 }
 
+// Compression de l'image pour éviter de saturer la mémoire
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600; // Taille suffisante pour un justificatif
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Compression à 60%
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ============ NAVIGATION ============
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -370,7 +441,7 @@ function showView(name) {
   document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
   const titles = {
     dashboard: ['🍼 HACCP Micro-Crèche', 'Tableau de bord'],
-    temp: ['🌡️ Températures', 'Relevés des équipements'],
+    temp: ['🌡️ Contrôles', 'Températures et traçabilité'],
     bib: ['🍼 Biberonnerie', 'Traçabilité des biberons'],
     children: ['👶 Enfants', 'Allergènes et PAI'],
     samples: ['🍽️ Plats témoins', 'Conservation 5 jours'],
@@ -413,7 +484,7 @@ function renderDashboard() {
 
   state.temps.forEach(t => {
     if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange && !t.resolved) {
-      alerts.push(`🌡️ ${t.equipName} : ${t.value}°C (hors norme le ${fmtDate(t.ts)})`);
+      alerts.push(`🌡️ ${t.label} : ${t.value}°C (hors norme)`);
     }
   });
 
@@ -451,54 +522,124 @@ function renderTemp() {
 
   const list = document.getElementById('tempList');
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">Aucun relevé</div>';
+    list.innerHTML = '<div class="empty">Aucun contrôle</div>';
     return;
   }
   list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(t => {
     const badge = t.outOfRange
       ? `<span class="alert-badge badge-danger">HORS NORME</span>`
       : `<span class="alert-badge badge-ok">OK</span>`;
+    const photoHtml = t.photo ? `<img src="${t.photo}" class="photo-thumb" onclick="window.open('${t.photo}', '_blank')">` : '';
     return `<div class="list-item">
       <div class="info">
-        <div class="title">${t.equipName} — ${t.value}°C ${badge}</div>
+        <div class="title">${t.label} — ${t.value}°C ${badge}</div>
         <div class="detail">${fmtDate(t.ts)} • ${t.operator}${t.action ? ' • Action: ' + t.action : ''}</div>
       </div>
+      ${photoHtml}
       <button class="small danger" onclick="deleteTemp('${t.id}')">✕</button>
     </div>`;
   }).join('');
 }
 
+function updateTempFields() {
+  const type = document.getElementById('tempType').value;
+  const fieldDaily = document.getElementById('fields-daily');
+  const fieldDelivery = document.getElementById('fields-delivery');
+  const fieldDish = document.getElementById('fields-dish');
+  const instruction = document.getElementById('tempInstruction');
+
+  fieldDaily.style.display = 'none';
+  fieldDelivery.style.display = 'none';
+  fieldDish.style.display = 'none';
+  instruction.textContent = '';
+
+  if (type === 'daily') {
+    fieldDaily.style.display = 'block';
+    instruction.textContent = "Vérifiez que la température est dans les normes de l'équipement.";
+  } else if (type === 'delivery') {
+    fieldDelivery.style.display = 'block';
+    instruction.textContent = "Frais ≤ 4°C • Surgelé ≤ -18°C.";
+  } else if (type === 'preheat') {
+    fieldDish.style.display = 'block';
+    instruction.textContent = "La température du produit avant chauffe doit être ≤ 4°C (frais) ou ≤ -18°C (surgelé).";
+  } else if (type === 'reheat') {
+    fieldDish.style.display = 'block';
+    instruction.textContent = "La température à cœur doit être ≥ 63°C.";
+  }
+}
+
 function openTempForm() {
   document.getElementById('tempFormCard').style.display = 'block';
+  document.getElementById('tempType').value = 'daily';
+  
   const sel = document.getElementById('tempEquip');
   sel.innerHTML = state.equipment.map(e => `<option value="${e.name}">${e.name} (${e.min}°C à ${e.max}°C)</option>`).join('');
+  
+  document.getElementById('tempSupplier').value = '';
+  document.getElementById('tempProductType').value = 'frais';
+  document.getElementById('tempDish').value = '';
   document.getElementById('tempValue').value = '';
   document.getElementById('tempOperator').value = '';
   document.getElementById('tempAction').value = '';
+  document.getElementById('tempPhoto').value = ''; // Reset file input
+
+  updateTempFields();
   document.getElementById('tempFormCard').scrollIntoView({behavior:'smooth'});
 }
 function closeTempForm() { document.getElementById('tempFormCard').style.display = 'none'; }
 
-function saveTemp() {
-  const equipName = document.getElementById('tempEquip').value;
+async function saveTemp() {
+  const type = document.getElementById('tempType').value;
   const value = parseFloat(document.getElementById('tempValue').value);
   const operator = document.getElementById('tempOperator').value.trim();
   const action = document.getElementById('tempAction').value.trim();
+  const photoInput = document.getElementById('tempPhoto');
+
   if (isNaN(value)) return toast('⚠️ Entrez une température valide');
   if (!operator) return toast('⚠️ Indiquez votre prénom');
-  const equip = state.equipment.find(e => e.name === equipName);
-  const outOfRange = value < equip.min || value > equip.max;
+
+  let label = '';
+  let outOfRange = false;
+
+  if (type === 'daily') {
+    const equipName = document.getElementById('tempEquip').value;
+    const equip = state.equipment.find(e => e.name === equipName);
+    label = equipName;
+    outOfRange = value < equip.min || value > equip.max;
+  } else if (type === 'delivery') {
+    const supplier = document.getElementById('tempSupplier').value.trim() || 'Inconnu';
+    const productType = document.getElementById('tempProductType').value;
+    label = `Livraison ${supplier} (${productType})`;
+    if (productType === 'frais') outOfRange = value > 4;
+    if (productType === 'surgelé') outOfRange = value > -18;
+  } else if (type === 'preheat') {
+    const dish = document.getElementById('tempDish').value.trim() || 'Plat inconnu';
+    label = `Avant chauffe : ${dish}`;
+    outOfRange = value > 4; 
+  } else if (type === 'reheat') {
+    const dish = document.getElementById('tempDish').value.trim() || 'Plat inconnu';
+    label = `Remise en chauffe : ${dish}`;
+    outOfRange = value < 63;
+  }
+
+  let photoBase64 = null;
+  if (photoInput.files && photoInput.files[0]) {
+    toast('📸 Traitement de la photo...');
+    photoBase64 = await compressImage(photoInput.files[0]);
+  }
+
   state.temps.push({
-    id: uid(), ts: new Date().toISOString(), equipName, value,
-    operator, action, outOfRange, resolved: !outOfRange
+    id: uid(), ts: new Date().toISOString(), type, label, value,
+    operator, action, outOfRange, resolved: !outOfRange, photo: photoBase64
   });
+  
   save('temps', state.temps);
-  toast(outOfRange ? '⚠️ Relevé enregistré (hors norme !)' : '✅ Relevé enregistré');
+  toast(outOfRange ? '⚠️ Enregistré (HORS NORME !)' : '✅ Contrôle enregistré');
   closeTempForm();
   renderAll();
 }
 function deleteTemp(id) {
-  if (!confirm('Supprimer ce relevé ?')) return;
+  if (!confirm('Supprimer ce contrôle ?')) return;
   state.temps = state.temps.filter(t => t.id !== id);
   save('temps', state.temps); renderAll();
 }
@@ -727,7 +868,7 @@ function deleteClean(id) {
 // ============ EXPORT CSV ============
 function exportCSV() {
   const rows = [['Type', 'Date', 'Détail']];
-  state.temps.forEach(t => rows.push(['Température', t.ts, `${t.equipName}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}${t.action?' - '+t.action:''}`]));
+  state.temps.forEach(t => rows.push(['Contrôle: '+t.type, t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator} - Photo:${t.photo?'Oui':'Non'}`]));
   state.bibs.forEach(b => rows.push(['Biberon', b.ts, `${b.childName} - Lot ${b.milkLot} - Eau ${b.waterTemp}°C - ${b.consumed?'Consommé':'Non consommé'} - ${b.operator}`]));
   state.children.forEach(c => rows.push(['Enfant', '-', `${c.name} (${c.group}) - Allergènes: ${c.allergens||'aucun'}`]));
   state.samples.forEach(s => rows.push(['Plat témoin', s.ts, `${s.dish} - ${s.qty}g - ${s.location} - ${s.operator}`]));
@@ -741,7 +882,7 @@ function exportCSV() {
   a.download = `haccp-microcreche-${todayStr()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('📥 Export CSV téléchargé');
+  toast('📥 Export CSV téléchargé (Photos non incluses)');
 }
 
 // ============ INIT ============
