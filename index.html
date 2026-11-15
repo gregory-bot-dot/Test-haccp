@@ -40,20 +40,31 @@
 
   label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: var(--text); }
   input, select, textarea {
-    width: 100%; padding: 12px; border: 1px solid var(--border);
-    border-radius: 10px; font-size: 16px; background: #f8fafc; font-family: inherit;
+    width: 100%; padding: 14px; border: 1px solid var(--border);
+    border-radius: 12px; font-size: 16px; background: #f8fafc; font-family: inherit;
+    transition: border-color 0.2s;
   }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(49,151,149,0.1); }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
   
   button {
     background: var(--primary); color: white; border: none; padding: 14px 16px;
-    border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+    border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
     width: 100%; margin-top: 12px; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;
   }
   button:active { background: var(--primary-dark); transform: scale(0.98); }
   button.secondary { background: #edf2f7; color: var(--text); }
   button.danger { background: #fff5f5; color: var(--danger); }
   button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border-radius: 8px;}
+
+  /* BOUTONS DE SELECTION (Ajouter / Modifier) */
+  .action-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+  .action-toggle label {
+    flex: 1; padding: 12px; text-align: center; border: 2px solid var(--border);
+    border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px;
+    color: var(--muted); margin: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .action-toggle input { display: none; }
+  .action-toggle input:checked + label { border-color: var(--primary); background: #e6fffa; color: var(--primary-dark); }
 
   .alert-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-left: auto; }
   .badge-ok { background: #c6f6d5; color: var(--success); }
@@ -92,16 +103,26 @@
   .stat.danger .num { color: var(--danger); }
   .stat.warn .num { color: var(--warning); }
 
-  .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+  /* REFONTE VISUELLE DES STOCKS */
+  .stock-card { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 16px; background: white; border-radius: 16px; margin-bottom: 12px; 
+    border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+  }
+  .stock-card.alert { border-color: #feb2b2; background: #fffaf0; }
   .stock-info { flex: 1; }
-  .stock-name { font-weight: 700; font-size: 15px; }
-  .stock-qty { font-size: 13px; color: var(--muted); margin-top: 2px;}
-  .stock-controls { display: flex; align-items: center; gap: 12px; background: white; border-radius: 8px; padding: 4px; border: 1px solid var(--border); }
-  .stock-controls button { width: 32px; height: 32px; padding: 0; margin: 0; border-radius: 6px; font-size: 20px; background: #edf2f7; color: var(--text); }
-  .stock-controls button:active { background: var(--border); }
-  .stock-controls span { font-weight: 700; font-size: 16px; min-width: 24px; text-align: center; }
+  .stock-name { font-weight: 700; font-size: 16px; color: var(--text); }
+  .stock-card.alert .stock-name { color: var(--danger); }
+  .stock-qty-text { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  
+  .stock-controls { display: flex; align-items: center; gap: 8px; background: #f8fafc; border-radius: 12px; padding: 6px; border: 1px solid var(--border); }
+  .stock-controls button { width: 36px; height: 36px; padding: 0; margin: 0; border-radius: 8px; font-size: 22px; background: white; color: var(--text); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center;}
+  .stock-controls button:active { background: #edf2f7; }
+  .stock-controls .qty-display { font-weight: 800; font-size: 18px; min-width: 32px; text-align: center; color: var(--primary); }
+  .stock-card.alert .stock-controls .qty-display { color: var(--danger); }
 
-  .history-log { font-size: 12px; color: var(--muted); border-left: 3px solid var(--border); padding-left: 10px; margin-bottom: 8px; }
+  .history-log { font-size: 12px; color: var(--muted); border-left: 3px solid var(--primary); padding-left: 12px; margin-bottom: 10px; line-height: 1.4; }
+  .history-log strong { color: var(--text); }
 
   .toast {
     position: fixed; bottom: 90px; left: 16px; right: 16px;
@@ -121,7 +142,6 @@
 
 <!-- Vue Tableau de bord -->
 <div class="view active" id="view-dashboard">
-  <!-- 1. ACTIONS RAPIDES (En haut) -->
   <div class="card">
     <h2>⚡ Actions rapides</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -132,7 +152,6 @@
     </div>
   </div>
 
-  <!-- 2. CHIFFRES / STATS (Au milieu) -->
   <div class="stat-grid">
     <div class="stat" id="statTemp" onclick="showView('haccp')">
       <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
@@ -148,7 +167,6 @@
     </div>
   </div>
 
-  <!-- 3. CENTRE D'ALERTES (En bas) -->
   <div class="card">
     <h2>🚨 Centre d'alertes</h2>
     <div id="alertsList"></div>
@@ -244,35 +262,43 @@
 <!-- Vue ALIMENTS -->
 <div class="view" id="view-aliments">
   <div class="card">
-    <h2>🥕 Stocks Repas</h2>
-    
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 12px; font-size: 15px;">📦 Entrée de stock / Inventaire</h3>
+    <h2>🥕 Mouvement de Stock</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
       
-      <label>Nom du produit</label>
-      <input type="text" id="foodName" list="foodDatalist" placeholder="Choisir ou taper un produit...">
+      <label style="margin-top:0;">Nom du produit</label>
+      <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer un produit..." style="background: white;">
       <datalist id="foodDatalist"></datalist>
 
-      <label>Type d'opération</label>
-      <select id="foodAction">
-        <option value="add">➕ Réassort (Ajouter au stock)</option>
-        <option value="set">📋 Inventaire (Définir le stock exact)</option>
-      </select>
+      <label>Quel est le type de mouvement ?</label>
+      <div class="action-toggle">
+        <input type="radio" id="foodActAdd" name="foodAction" value="add" checked>
+        <label for="foodActAdd">➕ Ajouter (Réassort)</label>
+        
+        <input type="radio" id="foodActSet" name="foodAction" value="set">
+        <label for="foodActSet">✏️ Modifier (Inventaire)</label>
+      </div>
 
       <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10"></div>
-        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3"></div>
+        <div style="flex: 1;">
+          <label>Quantité</label>
+          <input type="number" id="foodQty" placeholder="ex: 10" style="background: white;">
+        </div>
+        <div style="flex: 1;">
+          <label>Seuil d'alerte</label>
+          <input type="number" id="foodMin" placeholder="ex: 3" style="background: white;">
+        </div>
       </div>
-      <label>Opérateur</label>
-      <input type="text" id="foodOperator" placeholder="Votre prénom">
       
-      <button onclick="saveStockItem('food')" style="margin-top: 16px; background: #38a169;">💾 Valider le mouvement</button>
+      <label>Opérateur</label>
+      <input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
+      
+      <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider le mouvement</button>
     </div>
     
-    <h3 style="font-size: 15px; margin-bottom: 12px;">État actuel des stocks</h3>
+    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks (Repas)</h2>
     <div id="foodList"></div>
     
-    <h3 style="font-size: 15px; margin: 20px 0 12px; color: var(--muted);">Historique des mouvements</h3>
+    <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="foodHistory"></div>
   </div>
 </div>
@@ -280,35 +306,43 @@
 <!-- Vue COUCHES -->
 <div class="view" id="view-couches">
   <div class="card">
-    <h2>🧷 Stocks Couches & Hygiène</h2>
-    
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 12px; font-size: 15px;">📦 Entrée de stock / Inventaire</h3>
+    <h2>🧷 Mouvement de Stock</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
       
-      <label>Nom du produit</label>
-      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Choisir ou taper un produit...">
+      <label style="margin-top:0;">Nom du produit</label>
+      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer un produit..." style="background: white;">
       <datalist id="diaperDatalist"></datalist>
 
-      <label>Type d'opération</label>
-      <select id="diaperAction">
-        <option value="add">➕ Réassort (Ajouter au stock)</option>
-        <option value="set">📋 Inventaire (Définir le stock exact)</option>
-      </select>
+      <label>Quel est le type de mouvement ?</label>
+      <div class="action-toggle">
+        <input type="radio" id="diaperActAdd" name="diaperAction" value="add" checked>
+        <label for="diaperActAdd">➕ Ajouter (Réassort)</label>
+        
+        <input type="radio" id="diaperActSet" name="diaperAction" value="set">
+        <label for="diaperActSet">✏️ Modifier (Inventaire)</label>
+      </div>
 
       <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10"></div>
-        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3"></div>
+        <div style="flex: 1;">
+          <label>Quantité</label>
+          <input type="number" id="diaperQty" placeholder="ex: 10" style="background: white;">
+        </div>
+        <div style="flex: 1;">
+          <label>Seuil d'alerte</label>
+          <input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;">
+        </div>
       </div>
-      <label>Opérateur</label>
-      <input type="text" id="diaperOperator" placeholder="Votre prénom">
       
-      <button onclick="saveStockItem('diaper')" style="margin-top: 16px; background: #d53f8c;">💾 Valider le mouvement</button>
+      <label>Opérateur</label>
+      <input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
+      
+      <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider le mouvement</button>
     </div>
     
-    <h3 style="font-size: 15px; margin-bottom: 12px;">État actuel des stocks</h3>
+    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks (Couches)</h2>
     <div id="diaperList"></div>
 
-    <h3 style="font-size: 15px; margin: 20px 0 12px; color: var(--muted);">Historique des mouvements</h3>
+    <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="diaperHistory"></div>
   </div>
 </div>
@@ -460,7 +494,11 @@ function saveStockItem(category) {
   const name = document.getElementById(prefix + 'Name').value.trim();
   const qty = parseInt(document.getElementById(prefix + 'Qty').value);
   const min = parseInt(document.getElementById(prefix + 'Min').value);
-  const action = document.getElementById(prefix + 'Action').value; // 'add' ou 'set'
+  
+  // Récupération de la valeur du bouton radio sélectionné
+  let action = 'add';
+  if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
+
   const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
 
   if (!name) return toast('⚠️ Indiquez le nom du produit');
@@ -489,23 +527,16 @@ function saveStockItem(category) {
     // Nouveau produit
     const finalMin = isNaN(min) ? 3 : min;
     list.push({ id: uid(), name, qty, min: finalMin });
-    logMessage = `${operator} a créé le produit ${name} avec un stock de départ de ${qty}`;
+    logMessage = `${operator} a créé le produit ${name} (Stock initial: ${qty})`;
     logType = "create";
   }
 
   // Ajout au journal
   state.stockLogs.unshift({
-    id: uid(),
-    ts: new Date().toISOString(),
-    category: category,
-    itemName: name,
-    type: logType,
-    qty: qty,
-    operator: operator,
-    message: logMessage
+    id: uid(), ts: new Date().toISOString(), category: category,
+    itemName: name, type: logType, qty: qty, operator: operator, message: logMessage
   });
   
-  // On garde seulement les 50 derniers logs pour ne pas surcharger
   if (state.stockLogs.length > 50) state.stockLogs.pop();
 
   save(category === 'food' ? 'foods' : 'diapers', list);
@@ -518,6 +549,7 @@ function saveStockItem(category) {
   document.getElementById(prefix + 'Qty').value = '';
   document.getElementById(prefix + 'Min').value = '';
   document.getElementById(prefix + 'Operator').value = '';
+  document.getElementById(prefix + 'ActAdd').checked = true;
   
   renderAll();
 }
@@ -527,9 +559,16 @@ function renderStocks() {
   const foodList = document.getElementById('foodList');
   foodList.innerHTML = state.foods.length === 0 ? '<div class="empty">Aucun repas en stock</div>' : state.foods.map(s => {
     const isLow = s.qty <= s.min;
-    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
-      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
-      <div class="stock-controls"><button onclick="updateStockQty('food', '${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateStockQty('food', '${s.id}', 1)">+</button></div>
+    return `<div class="stock-card ${isLow ? 'alert' : ''}">
+      <div class="stock-info">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-qty-text">Seuil alerte : ${s.min}</div>
+      </div>
+      <div class="stock-controls">
+        <button onclick="updateStockQty('food', '${s.id}', -1)">-</button>
+        <span class="qty-display">${s.qty}</span>
+        <button onclick="updateStockQty('food', '${s.id}', 1)">+</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -537,9 +576,16 @@ function renderStocks() {
   const diaperList = document.getElementById('diaperList');
   diaperList.innerHTML = state.diapers.length === 0 ? '<div class="empty">Aucun produit d\'hygiène en stock</div>' : state.diapers.map(s => {
     const isLow = s.qty <= s.min;
-    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
-      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
-      <div class="stock-controls"><button onclick="updateStockQty('diaper', '${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateStockQty('diaper', '${s.id}', 1)">+</button></div>
+    return `<div class="stock-card ${isLow ? 'alert' : ''}">
+      <div class="stock-info">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-qty-text">Seuil alerte : ${s.min}</div>
+      </div>
+      <div class="stock-controls">
+        <button onclick="updateStockQty('diaper', '${s.id}', -1)">-</button>
+        <span class="qty-display">${s.qty}</span>
+        <button onclick="updateStockQty('diaper', '${s.id}', 1)">+</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -560,10 +606,10 @@ function updateStockQty(category, id, delta) {
     item.qty += delta;
     if (item.qty < 0) item.qty = 0;
     
-    // Logger l'action rapide
+    // Logger l'action rapide (seulement si on clique sur - ou +)
     state.stockLogs.unshift({
       id: uid(), ts: new Date().toISOString(), category: category,
-      itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Utilisation rapide",
+      itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide",
       message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`
     });
     if (state.stockLogs.length > 50) state.stockLogs.pop();
