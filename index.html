@@ -103,7 +103,7 @@
   .stat.danger .num { color: var(--danger); }
   .stat.warn .num { color: var(--warning); }
 
-  /* REFONTE VISUELLE DES STOCKS */
+  /* CARTES STOCKS */
   .stock-card { 
     display: flex; justify-content: space-between; align-items: center; 
     padding: 16px; background: white; border-radius: 16px; margin-bottom: 12px; 
@@ -131,9 +131,29 @@
     z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   .toast.show { opacity: 1; transform: translateY(-10px); }
+
+  /* --- STYLES POUR L'EXPORT PDF (IMPRESSION) --- */
+  #print-report { display: none; }
+  @media print {
+    body { background: white; padding: 0; font-size: 12px; }
+    .view, nav, header, .toast { display: none !important; }
+    #print-report { display: block !important; padding: 20px; }
+    .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+    .report-header h1 { margin: 0; font-size: 24px; }
+    .report-header p { margin: 5px 0 0; color: #555; }
+    .report-section { margin-bottom: 30px; page-break-inside: avoid; }
+    .report-section h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .report-table th, .report-table td { border: 1px solid #999; padding: 6px 8px; text-align: left; }
+    .report-table th { background: #eee; font-weight: bold; }
+    .report-table .danger-text { color: red; font-weight: bold; }
+  }
 </style>
 </head>
 <body>
+
+<!-- LA ZONE CACHÉE QUI SERVIRA POUR LE PDF -->
+<div id="print-report"></div>
 
 <header>
   <h1 id="headerTitle">🏡 Espace Crèche</h1>
@@ -148,7 +168,7 @@
       <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
       <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
       <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
-      <button onclick="showView('services')" style="background: #718096;">🧽 Nettoyage</button>
+      <button onclick="showView('soins')" style="background: #805ad5;">💊 Pharmacie</button>
     </div>
   </div>
 
@@ -162,8 +182,8 @@
     <div class="stat warn" id="statStockFood" onclick="showView('aliments')">
       <div class="num" id="dashFoodCount">0</div><div class="lbl">Alertes Aliments</div>
     </div>
-    <div class="stat warn" id="statStockDiaper" onclick="showView('couches')">
-      <div class="num" id="dashDiaperCount">0</div><div class="lbl">Alertes Couches</div>
+    <div class="stat warn" id="statPharma" onclick="showView('soins')">
+      <div class="num" id="dashPharmaCount">0</div><div class="lbl">Alertes Pharmacie</div>
     </div>
   </div>
 
@@ -191,46 +211,20 @@
         <option value="preheat">🍲 Contrôle avant chauffe</option>
         <option value="reheat">🔥 Contrôle remise en chauffe</option>
       </select>
-
-      <div id="fields-daily">
-        <label>Équipement</label>
-        <select id="tempEquip"></select>
-      </div>
+      <div id="fields-daily"><label>Équipement</label><select id="tempEquip"></select></div>
       <div id="fields-delivery" style="display:none">
-        <label>Fournisseur</label>
-        <input type="text" id="tempSupplier" placeholder="ex: Pomona...">
-        <label>Type de produit</label>
-        <select id="tempProductType">
-          <option value="frais">Frais (≤ 4°C)</option>
-          <option value="surgelé">Surgelé (≤ -18°C)</option>
-        </select>
+        <label>Fournisseur</label><input type="text" id="tempSupplier" placeholder="ex: Pomona...">
+        <label>Type de produit</label><select id="tempProductType"><option value="frais">Frais (≤ 4°C)</option><option value="surgelé">Surgelé (≤ -18°C)</option></select>
       </div>
-      <div id="fields-dish" style="display:none">
-        <label>Nom du plat</label>
-        <input type="text" id="tempDish" placeholder="ex: Purée de carottes">
-      </div>
-
-      <label>Température mesurée (°C)</label>
-      <input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
-      <p class="meta" id="tempInstruction" style="margin-top: 6px;"></p>
-
-      <label>Opérateur</label>
-      <input type="text" id="tempOperator" placeholder="Votre prénom">
-      <label>Action corrective (si hors norme)</label>
-      <textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
-      <label>📸 Photo (optionnel)</label>
-      <input type="file" id="tempPhoto" accept="image/*" capture="environment">
-
-      <button onclick="saveTemp()">💾 Enregistrer</button>
-      <button onclick="closeTempForm()" class="secondary">Annuler</button>
+      <div id="fields-dish" style="display:none"><label>Nom du plat</label><input type="text" id="tempDish" placeholder="ex: Purée de carottes"></div>
+      <label>Température mesurée (°C)</label><input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
+      <label>Opérateur</label><input type="text" id="tempOperator" placeholder="Votre prénom">
+      <label>Action corrective (si hors norme)</label><textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
+      <label>📸 Photo (optionnel)</label><input type="file" id="tempPhoto" accept="image/*" capture="environment">
+      <button onclick="saveTemp()">💾 Enregistrer</button><button onclick="closeTempForm()" class="secondary">Annuler</button>
     </div>
-
     <div class="card">
-      <div class="tabs" id="tempTabs">
-        <button class="active" onclick="filterTemp('today')">Aujourd'hui</button>
-        <button onclick="filterTemp('week')">7 jours</button>
-        <button onclick="filterTemp('all')">Tout</button>
-      </div>
+      <div class="tabs" id="tempTabs"><button class="active" onclick="filterTemp('today')">Aujourd'hui</button><button onclick="filterTemp('week')">7 jours</button><button onclick="filterTemp('all')">Tout</button></div>
       <div id="tempList"></div>
     </div>
   </div>
@@ -239,65 +233,38 @@
     <button onclick="openSampleForm()" style="margin-bottom: 16px;">➕ Nouveau plat témoin</button>
     <div class="card" id="sampleFormCard" style="display:none; background: #f8fafc;">
       <h2>Enregistrer un plat témoin</h2>
-      <label>Date du repas</label>
-      <input type="date" id="sampleDate">
-      <label>Plat</label>
-      <input type="text" id="sampleDish" placeholder="ex: Purée carottes">
-      <label>Quantité (g)</label>
-      <input type="number" id="sampleQty" placeholder="ex: 100">
-      <label>Emplacement</label>
-      <input type="text" id="sampleLocation" placeholder="ex: Frigo témoins">
-      <label>Opérateur</label>
-      <input type="text" id="sampleOperator" placeholder="Votre prénom">
-      <button onclick="saveSample()">💾 Enregistrer</button>
-      <button onclick="closeSampleForm()" class="secondary">Annuler</button>
+      <label>Date du repas</label><input type="date" id="sampleDate">
+      <label>Plat</label><input type="text" id="sampleDish" placeholder="ex: Purée carottes">
+      <label>Quantité (g)</label><input type="number" id="sampleQty" placeholder="ex: 100">
+      <label>Opérateur</label><input type="text" id="sampleOperator" placeholder="Votre prénom">
+      <button onclick="saveSample()">💾 Enregistrer</button><button onclick="closeSampleForm()" class="secondary">Annuler</button>
     </div>
-    <div class="card">
-      <h2>Historique (5 jours)</h2>
-      <div id="sampleList"></div>
-    </div>
+    <div class="card"><h2>Historique (5 jours)</h2><div id="sampleList"></div></div>
   </div>
 </div>
 
 <!-- Vue ALIMENTS -->
 <div class="view" id="view-aliments">
   <div class="card">
-    <h2>🥕 Mouvement de Stock</h2>
+    <h2>🥕 Mouvement de Stock (Repas)</h2>
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
-      
       <label style="margin-top:0;">Nom du produit</label>
-      <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer un produit..." style="background: white;">
+      <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;">
       <datalist id="foodDatalist"></datalist>
-
-      <label>Quel est le type de mouvement ?</label>
+      <label>Type de mouvement</label>
       <div class="action-toggle">
-        <input type="radio" id="foodActAdd" name="foodAction" value="add" checked>
-        <label for="foodActAdd">➕ Ajouter (Réassort)</label>
-        
-        <input type="radio" id="foodActSet" name="foodAction" value="set">
-        <label for="foodActSet">✏️ Modifier (Inventaire)</label>
+        <input type="radio" id="foodActAdd" name="foodAction" value="add" checked><label for="foodActAdd">➕ Ajouter</label>
+        <input type="radio" id="foodActSet" name="foodAction" value="set"><label for="foodActSet">✏️ Modifier</label>
       </div>
-
       <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;">
-          <label>Quantité</label>
-          <input type="number" id="foodQty" placeholder="ex: 10" style="background: white;">
-        </div>
-        <div style="flex: 1;">
-          <label>Seuil d'alerte</label>
-          <input type="number" id="foodMin" placeholder="ex: 3" style="background: white;">
-        </div>
+        <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10" style="background: white;"></div>
+        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3" style="background: white;"></div>
       </div>
-      
-      <label>Opérateur</label>
-      <input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
-      
-      <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider le mouvement</button>
+      <label>Opérateur</label><input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
+      <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider</button>
     </div>
-    
-    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks (Repas)</h2>
+    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks</h2>
     <div id="foodList"></div>
-    
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="foodHistory"></div>
   </div>
@@ -306,71 +273,86 @@
 <!-- Vue COUCHES -->
 <div class="view" id="view-couches">
   <div class="card">
-    <h2>🧷 Mouvement de Stock</h2>
+    <h2>🧷 Mouvement de Stock (Couches)</h2>
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
-      
       <label style="margin-top:0;">Nom du produit</label>
-      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer un produit..." style="background: white;">
+      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;">
       <datalist id="diaperDatalist"></datalist>
-
-      <label>Quel est le type de mouvement ?</label>
+      <label>Type de mouvement</label>
       <div class="action-toggle">
-        <input type="radio" id="diaperActAdd" name="diaperAction" value="add" checked>
-        <label for="diaperActAdd">➕ Ajouter (Réassort)</label>
-        
-        <input type="radio" id="diaperActSet" name="diaperAction" value="set">
-        <label for="diaperActSet">✏️ Modifier (Inventaire)</label>
+        <input type="radio" id="diaperActAdd" name="diaperAction" value="add" checked><label for="diaperActAdd">➕ Ajouter</label>
+        <input type="radio" id="diaperActSet" name="diaperAction" value="set"><label for="diaperActSet">✏️ Modifier</label>
       </div>
-
       <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;">
-          <label>Quantité</label>
-          <input type="number" id="diaperQty" placeholder="ex: 10" style="background: white;">
-        </div>
-        <div style="flex: 1;">
-          <label>Seuil d'alerte</label>
-          <input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;">
-        </div>
+        <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10" style="background: white;"></div>
+        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;"></div>
       </div>
-      
-      <label>Opérateur</label>
-      <input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
-      
-      <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider le mouvement</button>
+      <label>Opérateur</label><input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
+      <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider</button>
     </div>
-    
-    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks (Couches)</h2>
+    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks</h2>
     <div id="diaperList"></div>
-
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="diaperHistory"></div>
   </div>
 </div>
 
-<!-- Vue Services (Nettoyage + Export) -->
-<div class="view" id="view-services">
-  <div class="card">
-    <h2>📤 Données & Sauvegarde</h2>
-    <button onclick="exportCSV()" class="secondary" style="border: 1px solid var(--border);">📥 Exporter tout en CSV</button>
+<!-- Vue SOINS & ADMIN (Pharmacie, Nettoyage, PDF) -->
+<div class="view" id="view-soins">
+  <div class="tabs">
+    <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
+    <button onclick="switchSoinsTab('tab-clean')">🧽 Nettoyage</button>
+    <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
   </div>
 
-  <div class="card">
-    <h2>🧽 Nettoyage quotidien</h2>
-    <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
-    <div id="cleanFormCard" style="display:none; background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 12px;">
-      <label>Zone</label>
-      <select id="cleanZone">
-        <option>Biberonnerie</option><option>Zone de change</option><option>Cuisine</option>
-        <option>Réfectoire</option><option>Dortoir</option><option>Sanitaires</option><option>Salle de jeu</option>
-      </select>
-      <label>Tâche réalisée</label>
-      <input type="text" id="cleanTask" placeholder="ex: Désinfection des plans">
-      <label>Opérateur</label>
-      <input type="text" id="cleanOperator" placeholder="Votre prénom">
-      <button onclick="saveClean()">💾 Enregistrer</button>
-      <button onclick="closeCleanForm()" class="secondary">Annuler</button>
+  <!-- Onglet Pharmacie -->
+  <div id="tab-pharma" class="soins-subview">
+    <div class="card">
+      <h2>💊 Stock Pharmacie</h2>
+      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+        <label style="margin-top:0;">Nom du produit</label>
+        <input type="text" id="pharmaName" list="pharmaDatalist" placeholder="Doliprane, Sérum phy..." style="background: white;">
+        <datalist id="pharmaDatalist"></datalist>
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1;"><label>Quantité</label><input type="number" id="pharmaQty" placeholder="ex: 2" style="background: white;"></div>
+          <div style="flex: 1;"><label>Date de péremption</label><input type="date" id="pharmaExp" style="background: white;"></div>
+        </div>
+        <label>Opérateur</label><input type="text" id="pharmaOperator" placeholder="Votre prénom" style="background: white;">
+        <button onclick="savePharmaItem()" style="margin-top: 20px; background: #805ad5;">💾 Enregistrer</button>
+      </div>
+      <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 Médicaments en stock</h2>
+      <div id="pharmaList"></div>
     </div>
-    <div id="cleanList" style="margin-top: 16px;"></div>
+  </div>
+
+  <!-- Onglet Nettoyage -->
+  <div id="tab-clean" class="soins-subview" style="display:none">
+    <div class="card">
+      <h2>🧽 Nettoyage quotidien</h2>
+      <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
+      <div id="cleanFormCard" style="display:none; background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 12px;">
+        <label>Zone</label>
+        <select id="cleanZone"><option>Biberonnerie</option><option>Zone de change</option><option>Cuisine</option><option>Réfectoire</option><option>Dortoir</option><option>Sanitaires</option><option>Salle de jeu</option></select>
+        <label>Tâche réalisée</label><input type="text" id="cleanTask" placeholder="ex: Désinfection des plans">
+        <label>Opérateur</label><input type="text" id="cleanOperator" placeholder="Votre prénom">
+        <button onclick="saveClean()">💾 Enregistrer</button><button onclick="closeCleanForm()" class="secondary">Annuler</button>
+      </div>
+      <div id="cleanList" style="margin-top: 16px;"></div>
+    </div>
+  </div>
+
+  <!-- Onglet Admin / PDF -->
+  <div id="tab-admin" class="soins-subview" style="display:none">
+    <div class="card">
+      <h2>📄 Générateur de Rapport</h2>
+      <p class="meta">Génère un document propre (sans les boutons) avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
+      <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
+    </div>
+    <div class="card">
+      <h2>💾 Sauvegarde (CSV)</h2>
+      <p class="meta">Exporte toutes les données brutes dans un fichier tableur (Excel).</p>
+      <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
+    </div>
   </div>
 </div>
 
@@ -380,7 +362,7 @@
   <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
   <button data-view="aliments" onclick="showView('aliments')"><span class="icon">🥕</span>Aliments</button>
   <button data-view="couches" onclick="showView('couches')"><span class="icon">🧷</span>Couches</button>
-  <button data-view="services" onclick="showView('services')"><span class="icon">⚙️</span>Services</button>
+  <button data-view="soins" onclick="showView('soins')"><span class="icon">💊</span>Soins</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -399,8 +381,8 @@ function save(key, val) { try { localStorage.setItem('creche_' + key, JSON.strin
 
 let state = {
   temps: load('temps', []), samples: load('samples', []), cleans: load('cleans', []),
-  foods: load('foods', []), diapers: load('diapers', []), equipment: load('equipment', DEFAULT_EQUIPMENT),
-  stockLogs: load('stockLogs', [])
+  foods: load('foods', []), diapers: load('diapers', []), pharma: load('pharma', []),
+  equipment: load('equipment', DEFAULT_EQUIPMENT), stockLogs: load('stockLogs', [])
 };
 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
@@ -439,7 +421,7 @@ function showView(name) {
     haccp: ['🌡️ HACCP', 'Sécurité alimentaire'],
     aliments: ['🥕 Aliments', 'Gestion des repas'],
     couches: ['🧷 Couches', 'Hygiène & Changes'],
-    services: ['⚙️ Services', 'Nettoyage et données']
+    soins: ['💊 Soins & Admin', 'Pharmacie, Nettoyage, PDF']
   };
   document.getElementById('headerTitle').textContent = titles[name][0];
   document.getElementById('headerSub').textContent = titles[name][1];
@@ -453,9 +435,16 @@ function switchHaccpTab(tabId) {
   event.target.classList.add('active');
 }
 
+function switchSoinsTab(tabId) {
+  document.querySelectorAll('.soins-subview').forEach(v => v.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+  document.querySelectorAll('#view-soins .tabs button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
 // ============ RENDU ============
 function renderAll() {
-  renderDashboard(); renderTemp(); renderSamples(); renderStocks(); renderCleans(); updateDatalists();
+  renderDashboard(); renderTemp(); renderSamples(); renderStocks(); renderPharma(); renderCleans(); updateDatalists();
 }
 
 function renderDashboard() {
@@ -464,10 +453,19 @@ function renderDashboard() {
   
   let alerts = [];
   let alertFoodCount = 0;
-  let alertDiaperCount = 0;
+  let alertPharmaCount = 0;
   
-  state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name} (Reste ${s.qty})`); alertFoodCount++; } });
-  state.diapers.forEach(s => { if (s.qty <= s.min) { alerts.push(`🧷 Stock bas : ${s.name} (Reste ${s.qty})`); alertDiaperCount++; } });
+  state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name}`); alertFoodCount++; } });
+  state.diapers.forEach(s => { if (s.qty <= s.min) { alerts.push(`🧷 Stock bas : ${s.name}`); } });
+  
+  state.pharma.forEach(p => {
+    if (p.exp) {
+      const daysLeft = Math.floor((new Date(p.exp).getTime() - today) / (1000*60*60*24));
+      if (daysLeft < 0) { alerts.push(`💊 PÉRIMÉ : ${p.name}`); alertPharmaCount++; }
+      else if (daysLeft <= 30) { alerts.push(`💊 Expire bientôt : ${p.name} (J-${daysLeft})`); alertPharmaCount++; }
+    }
+    if (p.qty <= 1) { alerts.push(`💊 Stock bas : ${p.name}`); alertPharmaCount++; }
+  });
   
   const now = Date.now(); const h = 3600 * 1000;
   state.temps.forEach(t => { if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange) alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`); });
@@ -476,75 +474,52 @@ function renderDashboard() {
   document.getElementById('dashTempCount').textContent = tempsToday;
   document.getElementById('dashAlertsCount').textContent = alerts.length;
   document.getElementById('dashFoodCount').textContent = alertFoodCount;
-  document.getElementById('dashDiaperCount').textContent = alertDiaperCount;
+  document.getElementById('dashPharmaCount').textContent = alertPharmaCount;
 
   const list = document.getElementById('alertsList');
   if (alerts.length === 0) list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
   else list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
 }
 
-/* --- GESTION DES STOCKS (Aliments & Couches) --- */
+/* --- DATALISTS --- */
 function updateDatalists() {
   document.getElementById('foodDatalist').innerHTML = state.foods.map(f => `<option value="${f.name}">`).join('');
   document.getElementById('diaperDatalist').innerHTML = state.diapers.map(d => `<option value="${d.name}">`).join('');
+  document.getElementById('pharmaDatalist').innerHTML = state.pharma.map(p => `<option value="${p.name}">`).join('');
 }
 
+/* --- STOCKS (ALIMENTS & COUCHES) --- */
 function saveStockItem(category) {
   const prefix = category === 'food' ? 'food' : 'diaper';
   const name = document.getElementById(prefix + 'Name').value.trim();
   const qty = parseInt(document.getElementById(prefix + 'Qty').value);
   const min = parseInt(document.getElementById(prefix + 'Min').value);
-  
-  // Récupération de la valeur du bouton radio sélectionné
-  let action = 'add';
-  if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
-
+  let action = 'add'; if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
   const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
 
-  if (!name) return toast('⚠️ Indiquez le nom du produit');
-  if (isNaN(qty) || qty < 0) return toast('⚠️ Indiquez une quantité valide');
+  if (!name) return toast('⚠️ Nom du produit ?');
+  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
   
   let list = category === 'food' ? state.foods : state.diapers;
   let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
-  
-  let logMessage = "";
-  let logType = "in";
+  let logMessage = ""; let logType = "in";
 
   if (existingItem) {
-    if (action === 'set') {
-      logMessage = `${operator} a mis à jour l'inventaire de ${name} (Nouveau stock: ${qty})`;
-      logType = "set";
-      existingItem.qty = qty;
-    } else {
-      logMessage = `${operator} a ajouté ${qty} ${name} (Réassort)`;
-      logType = "in";
-      existingItem.qty += qty;
-    }
-    if (!isNaN(min) && document.getElementById(prefix + 'Min').value !== '') {
-      existingItem.min = min;
-    }
+    if (action === 'set') { logMessage = `${operator} a mis à jour l'inventaire de ${name} (Nouveau: ${qty})`; logType = "set"; existingItem.qty = qty; }
+    else { logMessage = `${operator} a ajouté ${qty} ${name}`; logType = "in"; existingItem.qty += qty; }
+    if (!isNaN(min) && document.getElementById(prefix + 'Min').value !== '') existingItem.min = min;
   } else {
-    // Nouveau produit
     const finalMin = isNaN(min) ? 3 : min;
     list.push({ id: uid(), name, qty, min: finalMin });
-    logMessage = `${operator} a créé le produit ${name} (Stock initial: ${qty})`;
-    logType = "create";
+    logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
   }
 
-  // Ajout au journal
-  state.stockLogs.unshift({
-    id: uid(), ts: new Date().toISOString(), category: category,
-    itemName: name, type: logType, qty: qty, operator: operator, message: logMessage
-  });
-  
+  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage });
   if (state.stockLogs.length > 50) state.stockLogs.pop();
 
-  save(category === 'food' ? 'foods' : 'diapers', list);
-  save('stockLogs', state.stockLogs);
-  
+  save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
   toast(`✅ Mouvement enregistré !`);
   
-  // Reset form
   document.getElementById(prefix + 'Name').value = '';
   document.getElementById(prefix + 'Qty').value = '';
   document.getElementById(prefix + 'Min').value = '';
@@ -555,44 +530,22 @@ function saveStockItem(category) {
 }
 
 function renderStocks() {
-  // Rendu Aliments
-  const foodList = document.getElementById('foodList');
-  foodList.innerHTML = state.foods.length === 0 ? '<div class="empty">Aucun repas en stock</div>' : state.foods.map(s => {
-    const isLow = s.qty <= s.min;
-    return `<div class="stock-card ${isLow ? 'alert' : ''}">
-      <div class="stock-info">
-        <div class="stock-name">${s.name}</div>
-        <div class="stock-qty-text">Seuil alerte : ${s.min}</div>
-      </div>
-      <div class="stock-controls">
-        <button onclick="updateStockQty('food', '${s.id}', -1)">-</button>
-        <span class="qty-display">${s.qty}</span>
-        <button onclick="updateStockQty('food', '${s.id}', 1)">+</button>
-      </div>
-    </div>`;
-  }).join('');
+  const renderList = (list, cat) => {
+    if (list.length === 0) return '<div class="empty">Aucun produit en stock</div>';
+    return list.map(s => {
+      const isLow = s.qty <= s.min;
+      return `<div class="stock-card ${isLow ? 'alert' : ''}">
+        <div class="stock-info"><div class="stock-name">${s.name}</div><div class="stock-qty-text">Seuil alerte : ${s.min}</div></div>
+        <div class="stock-controls"><button onclick="updateStockQty('${cat}', '${s.id}', -1)">-</button><span class="qty-display">${s.qty}</span><button onclick="updateStockQty('${cat}', '${s.id}', 1)">+</button></div>
+      </div>`;
+    }).join('');
+  };
+  document.getElementById('foodList').innerHTML = renderList(state.foods, 'food');
+  document.getElementById('diaperList').innerHTML = renderList(state.diapers, 'diaper');
 
-  // Rendu Couches
-  const diaperList = document.getElementById('diaperList');
-  diaperList.innerHTML = state.diapers.length === 0 ? '<div class="empty">Aucun produit d\'hygiène en stock</div>' : state.diapers.map(s => {
-    const isLow = s.qty <= s.min;
-    return `<div class="stock-card ${isLow ? 'alert' : ''}">
-      <div class="stock-info">
-        <div class="stock-name">${s.name}</div>
-        <div class="stock-qty-text">Seuil alerte : ${s.min}</div>
-      </div>
-      <div class="stock-controls">
-        <button onclick="updateStockQty('diaper', '${s.id}', -1)">-</button>
-        <span class="qty-display">${s.qty}</span>
-        <button onclick="updateStockQty('diaper', '${s.id}', 1)">+</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Rendu Historique
   const renderLogs = (cat) => {
     const logs = state.stockLogs.filter(l => l.category === cat);
-    if(logs.length === 0) return '<div class="empty">Aucun mouvement récent</div>';
+    if(logs.length === 0) return '<div class="empty">Aucun mouvement</div>';
     return logs.map(l => `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message}</div>`).join('');
   };
   document.getElementById('foodHistory').innerHTML = renderLogs('food');
@@ -603,20 +556,79 @@ function updateStockQty(category, id, delta) {
   let list = category === 'food' ? state.foods : state.diapers;
   const item = list.find(s => s.id === id);
   if (item) {
-    item.qty += delta;
-    if (item.qty < 0) item.qty = 0;
-    
-    // Logger l'action rapide (seulement si on clique sur - ou +)
-    state.stockLogs.unshift({
-      id: uid(), ts: new Date().toISOString(), category: category,
-      itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide",
-      message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`
-    });
+    item.qty += delta; if (item.qty < 0) item.qty = 0;
+    state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}` });
     if (state.stockLogs.length > 50) state.stockLogs.pop();
-
-    save(category === 'food' ? 'foods' : 'diapers', list);
-    save('stockLogs', state.stockLogs);
+    save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
     renderAll();
+  }
+}
+
+/* --- PHARMACIE --- */
+function savePharmaItem() {
+  const name = document.getElementById('pharmaName').value.trim();
+  const qty = parseInt(document.getElementById('pharmaQty').value);
+  const exp = document.getElementById('pharmaExp').value;
+  const operator = document.getElementById('pharmaOperator').value.trim() || 'Inconnu';
+
+  if (!name) return toast('⚠️ Nom du produit ?');
+  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
+  
+  let existingItem = state.pharma.find(i => i.name.toLowerCase() === name.toLowerCase());
+  if (existingItem) {
+    existingItem.qty = qty;
+    if (exp) existingItem.exp = exp;
+  } else {
+    state.pharma.push({ id: uid(), name, qty, exp });
+  }
+  
+  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})` });
+  save('pharma', state.pharma); save('stockLogs', state.stockLogs);
+  toast(`✅ Pharmacie mise à jour !`);
+  
+  document.getElementById('pharmaName').value = '';
+  document.getElementById('pharmaQty').value = '';
+  document.getElementById('pharmaExp').value = '';
+  document.getElementById('pharmaOperator').value = '';
+  renderAll();
+}
+
+function renderPharma() {
+  const list = document.getElementById('pharmaList');
+  if (state.pharma.length === 0) { list.innerHTML = '<div class="empty">Aucun produit pharmaceutique</div>'; return; }
+  const today = new Date().setHours(0,0,0,0);
+  
+  list.innerHTML = state.pharma.map(p => {
+    let isAlert = false;
+    let expBadge = '';
+    
+    if (p.exp) {
+      const expDate = new Date(p.exp).getTime();
+      const daysLeft = Math.floor((expDate - today) / (1000*60*60*24));
+      if (daysLeft < 0) { isAlert = true; expBadge = `<span class="alert-badge badge-danger">PÉRIMÉ</span>`; }
+      else if (daysLeft <= 30) { isAlert = true; expBadge = `<span class="alert-badge badge-warn">Expire dans ${daysLeft}j</span>`; }
+      else { expBadge = `<span class="alert-badge badge-ok">Exp: ${new Date(p.exp).toLocaleDateString('fr-FR')}</span>`; }
+    }
+    if (p.qty <= 1) isAlert = true;
+
+    return `<div class="stock-card ${isAlert ? 'alert' : ''}">
+      <div class="stock-info">
+        <div class="stock-name">${p.name} ${expBadge}</div>
+      </div>
+      <div class="stock-controls">
+        <button onclick="updatePharmaQty('${p.id}', -1)">-</button>
+        <span class="qty-display">${p.qty}</span>
+        <button onclick="updatePharmaQty('${p.id}', 1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updatePharmaQty(id, delta) {
+  const item = state.pharma.find(p => p.id === id);
+  if (item) {
+    item.qty += delta; if (item.qty < 0) item.qty = 0;
+    save('pharma', state.pharma); renderAll();
   }
 }
 
@@ -697,20 +709,97 @@ function saveClean() {
 }
 function deleteClean(id) { if (confirm('Supprimer ?')) { state.cleans = state.cleans.filter(c => c.id !== id); save('cleans', state.cleans); renderAll(); } }
 
-/* --- EXPORT CSV --- */
+/* --- GÉNÉRATION PDF & CSV --- */
+function generatePDF() {
+  const todayStrFR = new Date().toLocaleDateString('fr-FR');
+  let html = `
+    <div class="report-header">
+      <h1>Rapport d'Activité - Micro-Crèche</h1>
+      <p>Généré le ${todayStrFR}</p>
+    </div>
+  `;
+
+  // 1. Températures du jour
+  const todayTemps = state.temps.filter(t => new Date(t.ts).getTime() >= startOfToday());
+  html += `<div class="report-section"><h2>1. Contrôles HACCP (Aujourd'hui)</h2>`;
+  if (todayTemps.length === 0) html += `<p>Aucun contrôle enregistré aujourd'hui.</p>`;
+  else {
+    html += `<table class="report-table"><tr><th>Heure</th><th>Type / Équipement</th><th>Temp.</th><th>Statut</th><th>Opérateur</th></tr>`;
+    todayTemps.forEach(t => {
+      const statut = t.outOfRange ? '<span class="danger-text">HORS NORME</span>' : 'OK';
+      html += `<tr><td>${new Date(t.ts).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</td><td>${t.label}</td><td>${t.value}°C</td><td>${statut}</td><td>${t.operator}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+  html += `</div>`;
+
+  // 2. Stocks Aliments & Couches
+  html += `<div class="report-section"><h2>2. État des Stocks</h2>`;
+  html += `<table class="report-table"><tr><th>Catégorie</th><th>Produit</th><th>Quantité restante</th><th>Statut</th></tr>`;
+  state.foods.forEach(s => { html += `<tr><td>Aliment</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
+  state.diapers.forEach(s => { html += `<tr><td>Couche/Hygiène</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
+  html += `</table></div>`;
+
+  // 3. Pharmacie
+  html += `<div class="report-section"><h2>3. Pharmacie & Soins</h2>`;
+  html += `<table class="report-table"><tr><th>Produit</th><th>Quantité</th><th>Date de péremption</th><th>Statut</th></tr>`;
+  state.pharma.forEach(p => {
+    let status = "OK";
+    if(p.exp) {
+       const daysLeft = Math.floor((new Date(p.exp).getTime() - new Date().setHours(0,0,0,0)) / (1000*60*60*24));
+       if(daysLeft < 0) status = '<span class="danger-text">PÉRIMÉ</span>';
+       else if(daysLeft <= 30) status = '<span class="danger-text">Expire bientôt</span>';
+    }
+    html += `<tr><td>${p.name}</td><td>${p.qty}</td><td>${p.exp ? new Date(p.exp).toLocaleDateString('fr-FR') : '-'}</td><td>${status}</td></tr>`;
+  });
+  html += `</table></div>`;
+
+  // 4. Plats témoins
+  html += `<div class="report-section"><h2>4. Plats Témoins</h2>`;
+  const now = Date.now();
+  const recentSamples = state.samples.filter(s => now - new Date(s.ts).getTime() < 6*24*3600*1000); // 6 derniers jours
+  if(recentSamples.length === 0) html += `<p>Aucun plat témoin enregistré récemment.</p>`;
+  else {
+    html += `<table class="report-table"><tr><th>Date</th><th>Plat</th><th>Quantité</th></tr>`;
+    recentSamples.forEach(s => {
+      html += `<tr><td>${new Date(s.ts).toLocaleDateString('fr-FR')}</td><td>${s.dish}</td><td>${s.qty}g</td></tr>`;
+    });
+    html += `</table>`;
+  }
+  html += `</div>`;
+
+  // 5. Nettoyage du jour
+  const todayCleans = state.cleans.filter(c => new Date(c.ts).getTime() >= startOfToday());
+  html += `<div class="report-section"><h2>5. Nettoyage (Aujourd'hui)</h2>`;
+  if (todayCleans.length === 0) html += `<p>Aucun nettoyage enregistré aujourd'hui.</p>`;
+  else {
+    html += `<table class="report-table"><tr><th>Heure</th><th>Zone</th><th>Tâche</th><th>Opérateur</th></tr>`;
+    todayCleans.forEach(c => {
+      html += `<tr><td>${new Date(c.ts).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</td><td>${c.zone}</td><td>${c.task}</td><td>${c.operator}</td></tr>`;
+    });
+    html += `</table>`;
+  }
+  html += `</div>`;
+
+  document.getElementById('print-report').innerHTML = html;
+  toast('📄 Préparation du PDF...');
+  setTimeout(() => { window.print(); }, 500);
+}
+
 function exportCSV() {
   const rows = [['Module', 'Date', 'Détail']];
   state.temps.forEach(t => rows.push(['HACCP Temp', t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}`]));
   state.samples.forEach(s => rows.push(['HACCP Témoin', s.ts, `${s.dish} - ${s.qty}g`]));
   state.foods.forEach(s => rows.push(['Stock Repas', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
   state.diapers.forEach(s => rows.push(['Stock Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
+  state.pharma.forEach(p => rows.push(['Pharmacie', '-', `${p.name} : Reste ${p.qty} (Péremption: ${p.exp||'-'})`]));
   state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, l.message]));
   state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-data-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
-  toast('📥 Export téléchargé !');
+  toast('📥 Export CSV téléchargé !');
 }
 
 // ============ INIT ============
