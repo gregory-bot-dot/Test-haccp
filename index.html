@@ -56,7 +56,6 @@
   button.danger { background: #fff5f5; color: var(--danger); }
   button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border-radius: 8px;}
 
-  /* BOUTONS DE SELECTION (Ajouter / Modifier) */
   .action-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
   .action-toggle label {
     flex: 1; padding: 12px; text-align: center; border: 2px solid var(--border);
@@ -77,7 +76,7 @@
   .list-item .info { flex: 1; min-width: 0; }
   .list-item .title { font-weight: 600; font-size: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;}
   .list-item .detail { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-  .photo-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+  .photo-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); margin-top: 6px;}
 
   nav {
     position: fixed; bottom: 0; left: 0; right: 0; background: white;
@@ -103,7 +102,6 @@
   .stat.danger .num { color: var(--danger); }
   .stat.warn .num { color: var(--warning); }
 
-  /* CARTES STOCKS */
   .stock-card { 
     display: flex; justify-content: space-between; align-items: center; 
     padding: 16px; background: white; border-radius: 16px; margin-bottom: 12px; 
@@ -121,7 +119,7 @@
   .stock-controls .qty-display { font-weight: 800; font-size: 18px; min-width: 32px; text-align: center; color: var(--primary); }
   .stock-card.alert .stock-controls .qty-display { color: var(--danger); }
 
-  .history-log { font-size: 12px; color: var(--muted); border-left: 3px solid var(--primary); padding-left: 12px; margin-bottom: 10px; line-height: 1.4; }
+  .history-log { font-size: 13px; color: var(--muted); border-left: 3px solid var(--primary); padding-left: 12px; margin-bottom: 12px; line-height: 1.4; }
   .history-log strong { color: var(--text); }
 
   .toast {
@@ -152,7 +150,6 @@
 </head>
 <body>
 
-<!-- LA ZONE CACHÉE QUI SERVIRA POUR LE PDF -->
 <div id="print-report"></div>
 
 <header>
@@ -246,8 +243,13 @@
 <!-- Vue ALIMENTS -->
 <div class="view" id="view-aliments">
   <div class="card">
-    <h2>🥕 Mouvement de Stock (Repas)</h2>
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+    <!-- 1. ETAT DES STOCKS EN HAUT -->
+    <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Repas)</h2>
+    <div id="foodList" style="margin-bottom: 24px;"></div>
+
+    <!-- 2. FORMULAIRE EN BAS -->
+    <h2>🥕 Mouvement de Stock</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
       <label style="margin-top:0;">Nom du produit</label>
       <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;">
       <datalist id="foodDatalist"></datalist>
@@ -261,10 +263,13 @@
         <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3" style="background: white;"></div>
       </div>
       <label>Opérateur</label><input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
+      <label>📸 Photo (bon de livraison...)</label>
+      <input type="file" id="foodPhoto" accept="image/*" capture="environment" style="background: white;">
+      
       <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider</button>
     </div>
-    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks</h2>
-    <div id="foodList"></div>
+
+    <!-- 3. HISTORIQUE TOUT EN BAS -->
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="foodHistory"></div>
   </div>
@@ -273,8 +278,13 @@
 <!-- Vue COUCHES -->
 <div class="view" id="view-couches">
   <div class="card">
-    <h2>🧷 Mouvement de Stock (Couches)</h2>
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+    <!-- 1. ETAT DES STOCKS EN HAUT -->
+    <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Couches)</h2>
+    <div id="diaperList" style="margin-bottom: 24px;"></div>
+
+    <!-- 2. FORMULAIRE EN BAS -->
+    <h2>🧷 Mouvement de Stock</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
       <label style="margin-top:0;">Nom du produit</label>
       <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;">
       <datalist id="diaperDatalist"></datalist>
@@ -288,10 +298,13 @@
         <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;"></div>
       </div>
       <label>Opérateur</label><input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
+      <label>📸 Photo (bon de livraison...)</label>
+      <input type="file" id="diaperPhoto" accept="image/*" capture="environment" style="background: white;">
+
       <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider</button>
     </div>
-    <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 État des stocks</h2>
-    <div id="diaperList"></div>
+
+    <!-- 3. HISTORIQUE TOUT EN BAS -->
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="diaperHistory"></div>
   </div>
@@ -305,7 +318,6 @@
     <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
   </div>
 
-  <!-- Onglet Pharmacie -->
   <div id="tab-pharma" class="soins-subview">
     <div class="card">
       <h2>💊 Stock Pharmacie</h2>
@@ -325,7 +337,6 @@
     </div>
   </div>
 
-  <!-- Onglet Nettoyage -->
   <div id="tab-clean" class="soins-subview" style="display:none">
     <div class="card">
       <h2>🧽 Nettoyage quotidien</h2>
@@ -341,11 +352,10 @@
     </div>
   </div>
 
-  <!-- Onglet Admin / PDF -->
   <div id="tab-admin" class="soins-subview" style="display:none">
     <div class="card">
       <h2>📄 Générateur de Rapport</h2>
-      <p class="meta">Génère un document propre (sans les boutons) avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
+      <p class="meta">Génère un document propre avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
       <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
     </div>
     <div class="card">
@@ -489,17 +499,24 @@ function updateDatalists() {
 }
 
 /* --- STOCKS (ALIMENTS & COUCHES) --- */
-function saveStockItem(category) {
+async function saveStockItem(category) {
   const prefix = category === 'food' ? 'food' : 'diaper';
   const name = document.getElementById(prefix + 'Name').value.trim();
   const qty = parseInt(document.getElementById(prefix + 'Qty').value);
   const min = parseInt(document.getElementById(prefix + 'Min').value);
   let action = 'add'; if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
   const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
+  const photoInput = document.getElementById(prefix + 'Photo');
 
   if (!name) return toast('⚠️ Nom du produit ?');
   if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
   
+  let photoBase64 = null;
+  if (photoInput.files && photoInput.files[0]) {
+    toast('📸 Traitement photo...');
+    photoBase64 = await compressImage(photoInput.files[0]);
+  }
+
   let list = category === 'food' ? state.foods : state.diapers;
   let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
   let logMessage = ""; let logType = "in";
@@ -514,7 +531,7 @@ function saveStockItem(category) {
     logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
   }
 
-  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage });
+  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 });
   if (state.stockLogs.length > 50) state.stockLogs.pop();
 
   save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
@@ -524,6 +541,7 @@ function saveStockItem(category) {
   document.getElementById(prefix + 'Qty').value = '';
   document.getElementById(prefix + 'Min').value = '';
   document.getElementById(prefix + 'Operator').value = '';
+  document.getElementById(prefix + 'Photo').value = '';
   document.getElementById(prefix + 'ActAdd').checked = true;
   
   renderAll();
@@ -546,7 +564,10 @@ function renderStocks() {
   const renderLogs = (cat) => {
     const logs = state.stockLogs.filter(l => l.category === cat);
     if(logs.length === 0) return '<div class="empty">Aucun mouvement</div>';
-    return logs.map(l => `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message}</div>`).join('');
+    return logs.map(l => {
+      const photoHtml = l.photo ? `<br><img src="${l.photo}" class="photo-thumb" onclick="window.open('${l.photo}', '_blank')">` : '';
+      return `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message} ${photoHtml}</div>`;
+    }).join('');
   };
   document.getElementById('foodHistory').innerHTML = renderLogs('food');
   document.getElementById('diaperHistory').innerHTML = renderLogs('diaper');
@@ -557,7 +578,7 @@ function updateStockQty(category, id, delta) {
   const item = list.find(s => s.id === id);
   if (item) {
     item.qty += delta; if (item.qty < 0) item.qty = 0;
-    state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}` });
+    state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
     if (state.stockLogs.length > 50) state.stockLogs.pop();
     save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
     renderAll();
@@ -582,7 +603,7 @@ function savePharmaItem() {
     state.pharma.push({ id: uid(), name, qty, exp });
   }
   
-  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})` });
+  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null });
   save('pharma', state.pharma); save('stockLogs', state.stockLogs);
   toast(`✅ Pharmacie mise à jour !`);
   
@@ -757,7 +778,7 @@ function generatePDF() {
   // 4. Plats témoins
   html += `<div class="report-section"><h2>4. Plats Témoins</h2>`;
   const now = Date.now();
-  const recentSamples = state.samples.filter(s => now - new Date(s.ts).getTime() < 6*24*3600*1000); // 6 derniers jours
+  const recentSamples = state.samples.filter(s => now - new Date(s.ts).getTime() < 6*24*3600*1000);
   if(recentSamples.length === 0) html += `<p>Aucun plat témoin enregistré récemment.</p>`;
   else {
     html += `<table class="report-table"><tr><th>Date</th><th>Plat</th><th>Quantité</th></tr>`;
@@ -793,7 +814,7 @@ function exportCSV() {
   state.foods.forEach(s => rows.push(['Stock Repas', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
   state.diapers.forEach(s => rows.push(['Stock Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
   state.pharma.forEach(p => rows.push(['Pharmacie', '-', `${p.name} : Reste ${p.qty} (Péremption: ${p.exp||'-'})`]));
-  state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, l.message]));
+  state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, `${l.message} (Photo: ${l.photo ? 'Oui' : 'Non'})`]));
   state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
