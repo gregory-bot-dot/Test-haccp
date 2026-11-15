@@ -10,16 +10,9 @@
 <title>Crèche Manager</title>
 <style>
   :root {
-    --primary: #319795;
-    --primary-dark: #285e61;
-    --danger: #e53e3e;
-    --warning: #dd6b20;
-    --success: #38a169;
-    --bg: #f0f4f8;
-    --card: #ffffff;
-    --text: #2d3748;
-    --muted: #718096;
-    --border: #e2e8f0;
+    --primary: #319795; --primary-dark: #285e61; --danger: #e53e3e;
+    --warning: #dd6b20; --success: #38a169; --bg: #f0f4f8;
+    --card: #ffffff; --text: #2d3748; --muted: #718096; --border: #e2e8f0;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -49,75 +42,60 @@
   input, select, textarea {
     width: 100%; padding: 12px; border: 1px solid var(--border);
     border-radius: 10px; font-size: 16px; background: #f8fafc; font-family: inherit;
-    transition: all 0.2s;
   }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(49,151,149,0.1); }
-  input[type="file"] { padding: 8px; font-size: 14px; background: white; }
-
+  
   button {
     background: var(--primary); color: white; border: none; padding: 14px 16px;
     border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
-    width: 100%; margin-top: 12px; font-family: inherit;
-    display: flex; justify-content: center; align-items: center; gap: 8px;
+    width: 100%; margin-top: 12px; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;
   }
   button:active { background: var(--primary-dark); transform: scale(0.98); }
   button.secondary { background: #edf2f7; color: var(--text); }
   button.danger { background: #fff5f5; color: var(--danger); }
   button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border-radius: 8px;}
 
-  .alert-badge {
-    display: inline-block; padding: 4px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 700; margin-left: auto;
-  }
+  .alert-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-left: auto; }
   .badge-ok { background: #c6f6d5; color: var(--success); }
   .badge-warn { background: #feebc8; color: var(--warning); }
   .badge-danger { background: #fed7d7; color: var(--danger); }
 
-  .list-item {
-    border-bottom: 1px solid var(--border); padding: 14px 0;
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  }
+  .list-item { border-bottom: 1px solid var(--border); padding: 14px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .list-item:last-child { border-bottom: none; padding-bottom: 0; }
   .list-item:first-child { padding-top: 0; }
   .list-item .info { flex: 1; min-width: 0; }
   .list-item .title { font-weight: 600; font-size: 15px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;}
   .list-item .detail { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-  
   .photo-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
 
-  /* Nouvelle barre de navigation plus accessible */
   nav {
     position: fixed; bottom: 0; left: 0; right: 0; background: white;
     display: flex; border-top: 1px solid var(--border); z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
   }
-  nav button {
-    flex: 1; background: none; color: var(--muted); border: none;
-    padding: 12px 4px; font-size: 11px; font-weight: 600; margin: 0;
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    border-radius: 0; transition: color 0.2s;
-  }
-  nav button:active { background: #f8fafc; }
+  nav button { flex: 1; background: none; color: var(--muted); border: none; padding: 12px 4px; font-size: 11px; font-weight: 600; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 0; }
   nav button.active { color: var(--primary); }
   nav button .icon { font-size: 24px; line-height: 1; margin-bottom: 2px; transition: transform 0.2s; }
   nav button.active .icon { transform: translateY(-2px); }
 
   .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-  .tabs button { flex: 0 0 auto; background: white; color: var(--muted);
-    border: 1px solid var(--border); padding: 10px 16px; font-size: 14px; font-weight: 600; margin: 0; border-radius: 20px;}
+  .tabs button { flex: 0 0 auto; background: white; color: var(--muted); border: 1px solid var(--border); padding: 10px 16px; font-size: 14px; font-weight: 600; margin: 0; border-radius: 20px;}
   .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
 
   .empty { text-align: center; color: var(--muted); padding: 30px 16px; font-size: 14px; background: #f8fafc; border-radius: 12px; }
 
+  /* Blocs cliquables du tableau de bord */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .stat { background: white; border-radius: 16px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .stat { 
+    background: white; border-radius: 16px; padding: 16px; text-align: center; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.15s; 
+  }
+  .stat:active { transform: scale(0.95); background: #f8fafc; }
   .stat .num { font-size: 32px; font-weight: 800; line-height: 1; color: var(--primary); }
   .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 600;}
   .stat.danger .num { color: var(--danger); }
   .stat.warn .num { color: var(--warning); }
 
-  /* Styles spécifiques aux stocks */
   .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
   .stock-info { flex: 1; }
   .stock-name { font-weight: 700; font-size: 15px; }
@@ -131,8 +109,7 @@
     position: fixed; bottom: 90px; left: 16px; right: 16px;
     background: var(--text); color: white; padding: 14px 16px;
     border-radius: 12px; font-size: 14px; text-align: center; font-weight: 500;
-    z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   .toast.show { opacity: 1; transform: translateY(-10px); }
 </style>
@@ -147,10 +124,19 @@
 <!-- Vue Tableau de bord -->
 <div class="view active" id="view-dashboard">
   <div class="stat-grid">
-    <div class="stat" id="statTemp"><div class="num">0</div><div class="lbl">Contrôles aujourd'hui</div></div>
-    <div class="stat" id="statBib"><div class="num">0</div><div class="lbl">Biberons aujourd'hui</div></div>
-    <div class="stat danger" id="statAlerts"><div class="num">0</div><div class="lbl">Alertes globales</div></div>
-    <div class="stat" id="statChildren"><div class="num">0</div><div class="lbl">Enfants présents</div></div>
+    <!-- Blocs cliquables -->
+    <div class="stat" id="statTemp" onclick="showView('haccp')">
+      <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
+    </div>
+    <div class="stat danger" id="statAlerts" onclick="document.getElementById('alertsList').scrollIntoView({behavior:'smooth'})">
+      <div class="num" id="dashAlertsCount">0</div><div class="lbl">Alertes globales</div>
+    </div>
+    <div class="stat warn" id="statStockFood" onclick="showView('aliments')">
+      <div class="num" id="dashFoodCount">0</div><div class="lbl">Alertes Aliments</div>
+    </div>
+    <div class="stat warn" id="statStockDiaper" onclick="showView('couches')">
+      <div class="num" id="dashDiaperCount">0</div><div class="lbl">Alertes Couches</div>
+    </div>
   </div>
   
   <div class="card">
@@ -162,24 +148,23 @@
     <h2>⚡ Actions rapides</h2>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
       <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
-      <button onclick="showView('haccp'); openBibForm()" style="background: #dd6b20;">🍼 Biberon</button>
-      <button onclick="showView('stocks')" style="background: #38a169;">📦 Mettre à jour Stock</button>
-      <button onclick="showView('children')" style="background: #805ad5;">👶 Fiches Enfants</button>
+      <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
+      <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
+      <button onclick="showView('services')" style="background: #718096;">🧽 Nettoyage</button>
     </div>
   </div>
 </div>
 
-<!-- Vue HACCP (Regroupe Temp, Biberons, Témoins) -->
+<!-- Vue HACCP (Températures & Témoins) -->
 <div class="view" id="view-haccp">
   <div class="tabs">
     <button class="active" onclick="switchHaccpTab('tab-temp')">🌡️ Températures</button>
-    <button onclick="switchHaccpTab('tab-bib')">🍼 Biberons</button>
     <button onclick="switchHaccpTab('tab-samples')">🍽️ Plats témoins</button>
   </div>
 
   <!-- Sous-vue Températures -->
   <div id="tab-temp" class="haccp-subview">
-    <button onclick="openTempForm()" style="margin-bottom: 16px;">➕ Nouveau contrôle température</button>
+    <button onclick="openTempForm()" style="margin-bottom: 16px;">➕ Nouveau contrôle</button>
     <div class="card" id="tempFormCard" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0;">
       <h2>Nouveau contrôle</h2>
       <label>Type de contrôle</label>
@@ -194,10 +179,9 @@
         <label>Équipement</label>
         <select id="tempEquip"></select>
       </div>
-
       <div id="fields-delivery" style="display:none">
         <label>Fournisseur</label>
-        <input type="text" id="tempSupplier" placeholder="ex: Pomona, BioFrais...">
+        <input type="text" id="tempSupplier" placeholder="ex: Pomona...">
         <label>Type de produit</label>
         <select id="tempProductType">
           <option value="frais">Frais (≤ 4°C)</option>
@@ -205,7 +189,6 @@
           <option value="sec">Épicerie sèche</option>
         </select>
       </div>
-
       <div id="fields-dish" style="display:none">
         <label>Nom du plat</label>
         <input type="text" id="tempDish" placeholder="ex: Purée de carottes">
@@ -217,10 +200,8 @@
 
       <label>Opérateur</label>
       <input type="text" id="tempOperator" placeholder="Votre prénom">
-      
       <label>Action corrective (si hors norme)</label>
       <textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
-
       <label>📸 Photo (optionnel)</label>
       <input type="file" id="tempPhoto" accept="image/*" capture="environment">
 
@@ -235,36 +216,6 @@
         <button onclick="filterTemp('all')">Tout</button>
       </div>
       <div id="tempList"></div>
-    </div>
-  </div>
-
-  <!-- Sous-vue Biberons -->
-  <div id="tab-bib" class="haccp-subview" style="display:none">
-    <button onclick="openBibForm()" style="margin-bottom: 16px;">➕ Nouveau biberon</button>
-    <div class="card" id="bibFormCard" style="display:none; background: #f8fafc;">
-      <h2>Enregistrer un biberon</h2>
-      <label>Enfant</label>
-      <select id="bibChild"></select>
-      <label>Lot de lait</label>
-      <input type="text" id="bibLot" placeholder="ex: L2024-012">
-      <label>DLC du lait</label>
-      <input type="date" id="bibDLC">
-      <label>Température de l'eau (°C) — ≥ 70°C</label>
-      <input type="number" id="bibWaterTemp" step="1" placeholder="ex: 72">
-      <label>Heure de préparation</label>
-      <input type="time" id="bibPrepTime">
-      <label>Opérateur</label>
-      <input type="text" id="bibOperator" placeholder="Votre prénom">
-      <button onclick="saveBib()">💾 Enregistrer</button>
-      <button onclick="closeBibForm()" class="secondary">Annuler</button>
-    </div>
-    <div class="card">
-      <div class="tabs" id="bibTabs">
-        <button class="active" onclick="filterBib('today')">Aujourd'hui</button>
-        <button onclick="filterBib('week')">7 jours</button>
-        <button onclick="filterBib('all')">Tout</button>
-      </div>
-      <div id="bibList"></div>
     </div>
   </div>
 
@@ -293,68 +244,39 @@
   </div>
 </div>
 
-<!-- Vue STOCKS / INVENTAIRE (Nouveau) -->
-<div class="view" id="view-stocks">
+<!-- Vue ALIMENTS -->
+<div class="view" id="view-aliments">
   <div class="card">
-    <h2>📦 Gestion des stocks</h2>
-    <p class="meta" style="margin-bottom: 12px;">Suivez les couches, ingrédients et produits d'entretien. L'app vous alertera si le stock est bas.</p>
-    
-    <div id="stockFormCard" style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 12px; font-size: 15px;">➕ Ajouter / Modifier un produit</h3>
+    <h2>🥕 Stocks Aliments & Repas</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+      <h3 style="margin: 0 0 12px; font-size: 15px;">➕ Ajouter un produit</h3>
       <label>Nom du produit</label>
-      <input type="text" id="stockName" placeholder="ex: Couches Taille 3, Lessive, Purée...">
-      
-      <label>Catégorie</label>
-      <select id="stockCat">
-        <option value="Couches">👶 Couches & Changes</option>
-        <option value="Ingrédients">🥕 Ingrédients / Repas</option>
-        <option value="Entretien">🧴 Entretien / Hygiène</option>
-        <option value="Autre">📦 Autre</option>
-      </select>
-
+      <input type="text" id="foodName" placeholder="ex: Purée de légumes, Lait en poudre...">
       <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;">
-          <label>Quantité actuelle</label>
-          <input type="number" id="stockQty" placeholder="ex: 10">
-        </div>
-        <div style="flex: 1;">
-          <label>Seuil d'alerte</label>
-          <input type="number" id="stockMin" placeholder="ex: 3">
-        </div>
+        <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10"></div>
+        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3"></div>
       </div>
-
-      <button onclick="addStock()" style="margin-top: 16px;">Enregistrer le produit</button>
+      <button onclick="addFood()" style="margin-top: 16px;">Enregistrer</button>
     </div>
-
-    <div class="tabs" id="stockTabs">
-      <button class="active" onclick="filterStock('all')">Tout</button>
-      <button onclick="filterStock('Couches')">👶 Couches</button>
-      <button onclick="filterStock('Ingrédients')">🥕 Repas</button>
-      <button onclick="filterStock('Entretien')">🧴 Entretien</button>
-    </div>
-
-    <div id="stockList"></div>
+    <div id="foodList"></div>
   </div>
 </div>
 
-<!-- Vue Enfants -->
-<div class="view" id="view-children">
+<!-- Vue COUCHES -->
+<div class="view" id="view-couches">
   <div class="card">
-    <h2>👶 Fiches Enfants</h2>
-    <button onclick="openChildForm()">➕ Ajouter un enfant</button>
-  </div>
-  <div class="card" id="childFormCard" style="display:none; background: #f8fafc;">
-    <label>Prénom (ou initiale)</label>
-    <input type="text" id="childName" placeholder="ex: Léa M.">
-    <label>Groupe</label>
-    <input type="text" id="childGroup" placeholder="ex: Bébés, Moyens, Grands">
-    <label>Allergènes / PAI</label>
-    <textarea id="childAllergens" rows="2" placeholder="ex: Protéines de lait de vache..."></textarea>
-    <button onclick="saveChild()">💾 Enregistrer</button>
-    <button onclick="closeChildForm()" class="secondary">Annuler</button>
-  </div>
-  <div class="card">
-    <div id="childList"></div>
+    <h2>🧷 Stocks Couches & Hygiène</h2>
+    <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+      <h3 style="margin: 0 0 12px; font-size: 15px;">➕ Ajouter un produit</h3>
+      <label>Nom du produit</label>
+      <input type="text" id="diaperName" placeholder="ex: Couches T3, Lingettes, Liniment...">
+      <div style="display: flex; gap: 12px;">
+        <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10"></div>
+        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3"></div>
+      </div>
+      <button onclick="addDiaper()" style="margin-top: 16px;">Enregistrer</button>
+    </div>
+    <div id="diaperList"></div>
   </div>
 </div>
 
@@ -362,23 +284,17 @@
 <div class="view" id="view-services">
   <div class="card">
     <h2>📤 Données & Sauvegarde</h2>
-    <button onclick="exportCSV()" class="secondary" style="border: 1px solid var(--border);">📥 Exporter tout en CSV (Excel)</button>
+    <button onclick="exportCSV()" class="secondary" style="border: 1px solid var(--border);">📥 Exporter tout en CSV</button>
   </div>
 
   <div class="card">
     <h2>🧽 Nettoyage quotidien</h2>
     <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
-    
     <div id="cleanFormCard" style="display:none; background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 12px;">
       <label>Zone</label>
       <select id="cleanZone">
-        <option>Biberonnerie</option>
-        <option>Zone de change</option>
-        <option>Cuisine</option>
-        <option>Réfectoire</option>
-        <option>Dortoir</option>
-        <option>Sanitaires</option>
-        <option>Salle de jeu</option>
+        <option>Biberonnerie</option><option>Zone de change</option><option>Cuisine</option>
+        <option>Réfectoire</option><option>Dortoir</option><option>Sanitaires</option><option>Salle de jeu</option>
       </select>
       <label>Tâche réalisée</label>
       <input type="text" id="cleanTask" placeholder="ex: Désinfection des plans">
@@ -387,34 +303,23 @@
       <button onclick="saveClean()">💾 Enregistrer</button>
       <button onclick="closeCleanForm()" class="secondary">Annuler</button>
     </div>
-
     <div id="cleanList" style="margin-top: 16px;"></div>
   </div>
 </div>
 
-<!-- Barre de navigation (5 boutons spacieux) -->
+<!-- Barre de navigation -->
 <nav>
-  <button class="active" data-view="dashboard" onclick="showView('dashboard')">
-    <span class="icon">🏠</span>Accueil
-  </button>
-  <button data-view="haccp" onclick="showView('haccp')">
-    <span class="icon">🌡️</span>HACCP
-  </button>
-  <button data-view="stocks" onclick="showView('stocks')">
-    <span class="icon">📦</span>Stocks
-  </button>
-  <button data-view="children" onclick="showView('children')">
-    <span class="icon">👶</span>Enfants
-  </button>
-  <button data-view="services" onclick="showView('services')">
-    <span class="icon">⚙️</span>Services
-  </button>
+  <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="icon">🏠</span>Accueil</button>
+  <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
+  <button data-view="aliments" onclick="showView('aliments')"><span class="icon">🥕</span>Aliments</button>
+  <button data-view="couches" onclick="showView('couches')"><span class="icon">🧷</span>Couches</button>
+  <button data-view="services" onclick="showView('services')"><span class="icon">⚙️</span>Services</button>
 </nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ============ DONNÉES PAR DÉFAUT ============
+// ============ DONNÉES ============
 const DEFAULT_EQUIPMENT = [
   { name: "Frigo cuisine", type: "frigo", min: 0, max: 4 },
   { name: "Frigo biberonnerie", type: "frigo", min: 0, max: 4 },
@@ -422,40 +327,18 @@ const DEFAULT_EQUIPMENT = [
   { name: "Frigo plats témoins", type: "frigo", min: 0, max: 3 }
 ];
 
-// ============ STOCKAGE ============
-function load(key, def) {
-  try { return JSON.parse(localStorage.getItem('haccp_' + key)) || def; }
-  catch { return def; }
-}
-function save(key, val) {
-  try { localStorage.setItem('haccp_' + key, JSON.stringify(val)); } 
-  catch (e) { toast("⚠️ Mémoire pleine ! Exportez le CSV."); }
-}
+function load(key, def) { try { return JSON.parse(localStorage.getItem('creche_' + key)) || def; } catch { return def; } }
+function save(key, val) { try { localStorage.setItem('creche_' + key, JSON.stringify(val)); } catch (e) { toast("⚠️ Mémoire pleine !"); } }
 
 let state = {
-  temps: load('temps', []),
-  bibs: load('bibs', []),
-  children: load('children', []),
-  samples: load('samples', []),
-  cleans: load('cleans', []),
-  stocks: load('stocks', []),
-  equipment: load('equipment', DEFAULT_EQUIPMENT)
+  temps: load('temps', []), samples: load('samples', []), cleans: load('cleans', []),
+  foods: load('foods', []), diapers: load('diapers', []), equipment: load('equipment', DEFAULT_EQUIPMENT)
 };
 
-// ============ UTILITAIRES ============
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function nowTime() { return new Date().toTimeString().slice(0,5); }
-function fmtDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-}
+function fmtDate(iso) { const d = new Date(iso); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
 function startOfToday() { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
 function startOfWeek() { const d = new Date(); d.setDate(d.getDate()-7); d.setHours(0,0,0,0); return d.getTime(); }
 
@@ -465,11 +348,9 @@ function compressImage(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600; const scale = MAX_WIDTH / img.width;
+        const canvas = document.createElement('canvas'); const MAX_WIDTH = 600; const scale = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH; canvas.height = img.height * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve(canvas.toDataURL('image/jpeg', 0.6));
       };
       img.src = e.target.result;
@@ -486,11 +367,11 @@ function showView(name) {
   document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
   
   const titles = {
-    dashboard: ['🏡 Espace Crèche', 'Tableau de bord multiservices'],
-    haccp: ['🌡️ Sécurité & HACCP', 'Températures, biberons, témoins'],
-    stocks: ['📦 Gestion des Stocks', 'Couches, repas, entretien'],
-    children: ['👶 Fiches Enfants', 'Allergènes et PAI'],
-    services: ['⚙️ Services & Nettoyage', 'Outils de la crèche']
+    dashboard: ['🏡 Espace Crèche', 'Tableau de bord'],
+    haccp: ['🌡️ HACCP', 'Sécurité alimentaire'],
+    aliments: ['🥕 Aliments', 'Gestion des repas'],
+    couches: ['🧷 Couches', 'Hygiène & Changes'],
+    services: ['⚙️ Services', 'Nettoyage et données']
   };
   document.getElementById('headerTitle').textContent = titles[name][0];
   document.getElementById('headerSub').textContent = titles[name][1];
@@ -506,306 +387,143 @@ function switchHaccpTab(tabId) {
 
 // ============ RENDU ============
 function renderAll() {
-  renderDashboard();
-  renderTemp();
-  renderBib();
-  renderSamples();
-  renderStocks();
-  renderChildren();
-  renderCleans();
+  renderDashboard(); renderTemp(); renderSamples(); renderFoods(); renderDiapers(); renderCleans();
 }
 
 function renderDashboard() {
   const today = startOfToday();
   const tempsToday = state.temps.filter(t => new Date(t.ts).getTime() >= today).length;
-  const bibsToday = state.bibs.filter(b => new Date(b.ts).getTime() >= today).length;
+  
+  let alerts = [];
+  let alertFoodCount = 0;
+  let alertDiaperCount = 0;
+  
+  state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name} (Reste ${s.qty})`); alertFoodCount++; } });
+  state.diapers.forEach(s => { if (s.qty <= s.min) { alerts.push(`🧷 Stock bas : ${s.name} (Reste ${s.qty})`); alertDiaperCount++; } });
+  
+  const now = Date.now(); const h = 3600 * 1000;
+  state.temps.forEach(t => { if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange) alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`); });
+  state.samples.forEach(s => { if (now - new Date(s.ts).getTime() > 5*24*h) alerts.push(`🍽️ Plat témoin "${s.dish}" : à retirer`); });
 
-  const alerts = [];
-  const now = Date.now();
-  const h = 3600 * 1000;
-
-  // Alerte Stock
-  state.stocks.forEach(s => {
-    if (s.qty <= s.min) {
-      alerts.push(`📦 Stock bas : ${s.name} (Reste ${s.qty})`);
-    }
-  });
-
-  // Alerte Biberons
-  state.bibs.forEach(b => {
-    if (!b.consumed && new Date(b.ts).getTime() >= today) {
-      const elapsed = now - new Date(b.ts).getTime();
-      if (elapsed > h) alerts.push(`🍼 Biberon de ${b.childName} — À JETER (>1h)`);
-    }
-  });
-
-  // Alerte Températures
-  state.temps.forEach(t => {
-    if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange && !t.resolved) {
-      alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`);
-    }
-  });
-
-  document.getElementById('statTemp').querySelector('.num').textContent = tempsToday;
-  document.getElementById('statBib').querySelector('.num').textContent = bibsToday;
-  document.getElementById('statAlerts').querySelector('.num').textContent = alerts.length;
-  document.getElementById('statChildren').querySelector('.num').textContent = state.children.length;
+  document.getElementById('dashTempCount').textContent = tempsToday;
+  document.getElementById('dashAlertsCount').textContent = alerts.length;
+  document.getElementById('dashFoodCount').textContent = alertFoodCount;
+  document.getElementById('dashDiaperCount').textContent = alertDiaperCount;
 
   const list = document.getElementById('alertsList');
-  if (alerts.length === 0) {
-    list.innerHTML = '<div class="empty">Aucune alerte, tout est sous contrôle ! ✅</div>';
-  } else {
-    list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
-  }
+  if (alerts.length === 0) list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
+  else list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
 }
 
-/* --- CONTROLES TEMPÉRATURES --- */
+/* --- TEMPÉRATURES --- */
 let tempFilter = 'today';
-function filterTemp(f) {
-  tempFilter = f;
-  document.querySelectorAll('#tempTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f));
-  renderTemp();
-}
+function filterTemp(f) { tempFilter = f; document.querySelectorAll('#tempTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f)); renderTemp(); }
 function renderTemp() {
   let filtered = state.temps;
   if (tempFilter === 'today') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfToday());
   if (tempFilter === 'week') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfWeek());
   const list = document.getElementById('tempList');
   if (filtered.length === 0) { list.innerHTML = '<div class="empty">Aucun contrôle</div>'; return; }
-  
   list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(t => {
     const badge = t.outOfRange ? `<span class="alert-badge badge-danger">HORS NORME</span>` : `<span class="alert-badge badge-ok">OK</span>`;
     const photoHtml = t.photo ? `<img src="${t.photo}" class="photo-thumb" onclick="window.open('${t.photo}', '_blank')">` : '';
-    return `<div class="list-item">
-      <div class="info">
-        <div class="title">${t.label} — ${t.value}°C ${badge}</div>
-        <div class="detail">${fmtDate(t.ts)} • ${t.operator}${t.action ? ' • Action: ' + t.action : ''}</div>
-      </div>
-      ${photoHtml}
-      <button class="small danger" onclick="deleteTemp('${t.id}')">✕</button>
-    </div>`;
+    return `<div class="list-item"><div class="info"><div class="title">${t.label} — ${t.value}°C ${badge}</div><div class="detail">${fmtDate(t.ts)} • ${t.operator}</div></div>${photoHtml}<button class="small danger" onclick="deleteTemp('${t.id}')">✕</button></div>`;
   }).join('');
 }
 function updateTempFields() {
   const type = document.getElementById('tempType').value;
-  const instruction = document.getElementById('tempInstruction');
-  document.getElementById('fields-daily').style.display = 'none';
-  document.getElementById('fields-delivery').style.display = 'none';
-  document.getElementById('fields-dish').style.display = 'none';
-  instruction.textContent = '';
-  if (type === 'daily') { document.getElementById('fields-daily').style.display = 'block'; instruction.textContent = "Vérifiez que la température est dans les normes."; }
-  else if (type === 'delivery') { document.getElementById('fields-delivery').style.display = 'block'; instruction.textContent = "Frais ≤ 4°C • Surgelé ≤ -18°C."; }
-  else if (type === 'preheat') { document.getElementById('fields-dish').style.display = 'block'; instruction.textContent = "Avant chauffe : ≤ 4°C (frais) ou ≤ -18°C."; }
-  else if (type === 'reheat') { document.getElementById('fields-dish').style.display = 'block'; instruction.textContent = "Remise en chauffe : à cœur ≥ 63°C."; }
+  document.getElementById('fields-daily').style.display = 'none'; document.getElementById('fields-delivery').style.display = 'none'; document.getElementById('fields-dish').style.display = 'none';
+  if (type === 'daily') document.getElementById('fields-daily').style.display = 'block';
+  else if (type === 'delivery') document.getElementById('fields-delivery').style.display = 'block';
+  else document.getElementById('fields-dish').style.display = 'block';
 }
 function openTempForm() {
-  document.getElementById('tempFormCard').style.display = 'block';
-  document.getElementById('tempType').value = 'daily';
+  document.getElementById('tempFormCard').style.display = 'block'; document.getElementById('tempType').value = 'daily';
   document.getElementById('tempEquip').innerHTML = state.equipment.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
-  document.getElementById('tempValue').value = '';
-  document.getElementById('tempOperator').value = '';
-  document.getElementById('tempAction').value = '';
-  document.getElementById('tempPhoto').value = '';
-  updateTempFields();
+  document.getElementById('tempValue').value = ''; document.getElementById('tempOperator').value = ''; document.getElementById('tempPhoto').value = ''; updateTempFields();
   document.getElementById('tempFormCard').scrollIntoView({behavior:'smooth'});
 }
 function closeTempForm() { document.getElementById('tempFormCard').style.display = 'none'; }
 async function saveTemp() {
-  const type = document.getElementById('tempType').value;
-  const value = parseFloat(document.getElementById('tempValue').value);
-  const operator = document.getElementById('tempOperator').value.trim();
-  if (isNaN(value)) return toast('⚠️ Entrez une température');
-  if (!operator) return toast('⚠️ Indiquez votre prénom');
-  
+  const type = document.getElementById('tempType').value; const value = parseFloat(document.getElementById('tempValue').value); const operator = document.getElementById('tempOperator').value.trim();
+  if (isNaN(value) || !operator) return toast('⚠️ Champs manquants');
   let label = ''; let outOfRange = false;
-  if (type === 'daily') {
-    const equip = state.equipment.find(e => e.name === document.getElementById('tempEquip').value);
-    label = equip.name; outOfRange = value < equip.min || value > equip.max;
-  } else if (type === 'delivery') {
-    const pType = document.getElementById('tempProductType').value;
-    label = `Livraison ${document.getElementById('tempSupplier').value.trim() || 'Inconnu'}`;
-    if (pType === 'frais') outOfRange = value > 4;
-    if (pType === 'surgelé') outOfRange = value > -18;
-  } else if (type === 'preheat') {
-    label = `Avant chauffe : ${document.getElementById('tempDish').value.trim()}`; outOfRange = value > 4; 
-  } else if (type === 'reheat') {
-    label = `Remise chauffe : ${document.getElementById('tempDish').value.trim()}`; outOfRange = value < 63;
-  }
-
-  let photoBase64 = null;
-  const photoInput = document.getElementById('tempPhoto');
-  if (photoInput.files && photoInput.files[0]) {
-    toast('📸 Traitement photo...');
-    photoBase64 = await compressImage(photoInput.files[0]);
-  }
-  state.temps.push({ id: uid(), ts: new Date().toISOString(), type, label, value, operator, action: document.getElementById('tempAction').value.trim(), outOfRange, resolved: !outOfRange, photo: photoBase64 });
+  if (type === 'daily') { const eq = state.equipment.find(e => e.name === document.getElementById('tempEquip').value); label = eq.name; outOfRange = value < eq.min || value > eq.max; }
+  else if (type === 'delivery') { const p = document.getElementById('tempProductType').value; label = `Livraison ${document.getElementById('tempSupplier').value||'?'}`; if(p==='frais') outOfRange = value > 4; if(p==='surgelé') outOfRange = value > -18; }
+  else if (type === 'preheat') { label = `Avant chauffe : ${document.getElementById('tempDish').value||'?'}`; outOfRange = value > 4; }
+  else if (type === 'reheat') { label = `Remise chauffe : ${document.getElementById('tempDish').value||'?'}`; outOfRange = value < 63; }
+  let photoBase64 = null; const pInput = document.getElementById('tempPhoto');
+  if (pInput.files && pInput.files[0]) { toast('📸 Traitement...'); photoBase64 = await compressImage(pInput.files[0]); }
+  state.temps.push({ id: uid(), ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 });
   save('temps', state.temps); toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); closeTempForm(); renderAll();
 }
 function deleteTemp(id) { if (confirm('Supprimer ?')) { state.temps = state.temps.filter(t => t.id !== id); save('temps', state.temps); renderAll(); } }
 
-/* --- BIBERONS --- */
-let bibFilter = 'today';
-function filterBib(f) { bibFilter = f; document.querySelectorAll('#bibTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f)); renderBib(); }
-function renderBib() {
-  const now = Date.now(); const h = 3600*1000;
-  let filtered = state.bibs;
-  if (bibFilter === 'today') filtered = filtered.filter(b => new Date(b.ts).getTime() >= startOfToday());
-  if (bibFilter === 'week') filtered = filtered.filter(b => new Date(b.ts).getTime() >= startOfWeek());
-  const list = document.getElementById('bibList');
-  if (filtered.length === 0) { list.innerHTML = '<div class="empty">Aucun biberon</div>'; return; }
-  list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(b => {
-    const elapsed = now - new Date(b.ts).getTime();
-    let badge = '<span class="alert-badge badge-ok">OK</span>';
-    if (!b.consumed && elapsed > h) badge = '<span class="alert-badge badge-danger">À JETER</span>';
-    else if (!b.consumed) badge = `<span class="alert-badge badge-warn">${Math.floor((h-elapsed)/60000)} min</span>`;
-    const waterWarn = b.waterTemp < 70 ? '<span class="alert-badge badge-danger">Eau <70°C</span>' : '';
-    return `<div class="list-item">
-      <div class="info">
-        <div class="title">${b.childName} ${badge}${waterWarn}</div>
-        <div class="detail">${fmtDate(b.ts)} • Lot ${b.milkLot} • Eau ${b.waterTemp}°C</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        ${!b.consumed ? `<button class="small" onclick="consumeBib('${b.id}')">✓</button>` : ''}
-        <button class="small danger" onclick="deleteBib('${b.id}')">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-function openBibForm() {
-  document.getElementById('bibFormCard').style.display = 'block';
-  document.getElementById('bibChild').innerHTML = '<option value="">— Choisir —</option>' + state.children.map(c => `<option value="${c.id}">${c.name}</option>`).join('') + '<option value="__other">Autre</option>';
-  document.getElementById('bibLot').value = ''; document.getElementById('bibDLC').value = ''; document.getElementById('bibWaterTemp').value = ''; document.getElementById('bibPrepTime').value = nowTime(); document.getElementById('bibOperator').value = '';
-  document.getElementById('bibFormCard').scrollIntoView({behavior:'smooth'});
-}
-function closeBibForm() { document.getElementById('bibFormCard').style.display = 'none'; }
-function saveBib() {
-  let childId = document.getElementById('bibChild').value; let childName = '';
-  if (childId === '__other') childName = prompt('Prénom enfant ?') || 'Inconnu';
-  else { const c = state.children.find(c => c.id === childId); childName = c ? c.name : 'Inconnu'; }
-  const waterTemp = parseFloat(document.getElementById('bibWaterTemp').value);
-  if (!childName) return toast('⚠️ Choisissez un enfant'); if (isNaN(waterTemp)) return toast('⚠️ Température eau ?'); if (!document.getElementById('bibOperator').value.trim()) return toast('⚠️ Prénom opérateur ?');
-  const now = new Date(); const [hh, mm] = (document.getElementById('bibPrepTime').value || nowTime()).split(':'); now.setHours(parseInt(hh), parseInt(mm), 0, 0);
-  state.bibs.push({ id: uid(), ts: now.toISOString(), childName, milkLot: document.getElementById('bibLot').value.trim(), milkDLC: document.getElementById('bibDLC').value, waterTemp, operator: document.getElementById('bibOperator').value.trim(), consumed: false });
-  save('bibs', state.bibs); toast(waterTemp < 70 ? '⚠️ Eau <70°C !' : '✅ Enregistré'); closeBibForm(); renderAll();
-}
-function consumeBib(id) { const b = state.bibs.find(b => b.id === id); if (b) { b.consumed = true; save('bibs', state.bibs); toast('✅ Consommé'); renderAll(); } }
-function deleteBib(id) { if (confirm('Supprimer ?')) { state.bibs = state.bibs.filter(b => b.id !== id); save('bibs', state.bibs); renderAll(); } }
-
 /* --- PLATS TÉMOINS --- */
 function renderSamples() {
-  const list = document.getElementById('sampleList');
-  if (state.samples.length === 0) { list.innerHTML = '<div class="empty">Aucun plat témoin</div>'; return; }
+  const list = document.getElementById('sampleList'); if (state.samples.length === 0) { list.innerHTML = '<div class="empty">Aucun plat</div>'; return; }
   const now = Date.now();
   list.innerHTML = state.samples.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(s => {
     const days = Math.floor((now - new Date(s.ts).getTime()) / (24*3600*1000));
     const badge = days > 5 ? '<span class="alert-badge badge-danger">À RETIRER</span>' : `<span class="alert-badge badge-ok">J+${days}</span>`;
-    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g • ${s.location}</div></div><button class="small danger" onclick="deleteSample('${s.id}')">✕</button></div>`;
+    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g</div></div><button class="small danger" onclick="deleteSample('${s.id}')">✕</button></div>`;
   }).join('');
 }
-function openSampleForm() { document.getElementById('sampleFormCard').style.display = 'block'; document.getElementById('sampleDate').value = todayStr(); document.getElementById('sampleDish').value = ''; document.getElementById('sampleQty').value = '100'; document.getElementById('sampleLocation').value = ''; document.getElementById('sampleOperator').value = ''; document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'}); }
+function openSampleForm() { document.getElementById('sampleFormCard').style.display = 'block'; document.getElementById('sampleDate').value = todayStr(); document.getElementById('sampleDish').value = ''; document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'}); }
 function closeSampleForm() { document.getElementById('sampleFormCard').style.display = 'none'; }
 function saveSample() {
-  if (!document.getElementById('sampleDish').value.trim() || !document.getElementById('sampleOperator').value.trim()) return toast('⚠️ Champs manquants');
-  state.samples.push({ id: uid(), ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100, location: document.getElementById('sampleLocation').value.trim(), operator: document.getElementById('sampleOperator').value.trim() });
+  if (!document.getElementById('sampleDish').value.trim()) return toast('⚠️ Nom du plat ?');
+  state.samples.push({ id: uid(), ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 });
   save('samples', state.samples); toast('✅ Enregistré'); closeSampleForm(); renderAll();
 }
 function deleteSample(id) { if (confirm('Supprimer ?')) { state.samples = state.samples.filter(s => s.id !== id); save('samples', state.samples); renderAll(); } }
 
-/* --- STOCKS (NOUVEAU) --- */
-let stockFilter = 'all';
-function filterStock(f) {
-  stockFilter = f;
-  document.querySelectorAll('#stockTabs button').forEach((b,i) => b.classList.toggle('active', ['all','Couches','Ingrédients','Entretien'][i]===f));
-  renderStocks();
-}
-function renderStocks() {
-  const list = document.getElementById('stockList');
-  if (state.stocks.length === 0) { list.innerHTML = '<div class="empty">Aucun produit en stock</div>'; return; }
-  
-  let filtered = state.stocks;
-  if (stockFilter !== 'all') filtered = filtered.filter(s => s.category === stockFilter);
-
-  if (filtered.length === 0) { list.innerHTML = '<div class="empty">Aucun produit dans cette catégorie</div>'; return; }
-
-  list.innerHTML = filtered.map(s => {
+/* --- ALIMENTS --- */
+function renderFoods() {
+  const list = document.getElementById('foodList'); if (state.foods.length === 0) { list.innerHTML = '<div class="empty">Aucun aliment en stock</div>'; return; }
+  list.innerHTML = state.foods.map(s => {
     const isLow = s.qty <= s.min;
-    const bgColor = isLow ? 'background: #fff5f5; border-color: #feb2b2;' : '';
-    const textColor = isLow ? 'color: var(--danger);' : '';
-    return `
-    <div class="stock-item" style="${bgColor}">
-      <div class="stock-info">
-        <div class="stock-name" style="${textColor}">${s.name}</div>
-        <div class="stock-qty">${s.category} • Seuil: ${s.min}</div>
-      </div>
-      <div class="stock-controls">
-        <button onclick="updateStockQty('${s.id}', -1)">-</button>
-        <span>${s.qty}</span>
-        <button onclick="updateStockQty('${s.id}', 1)">+</button>
-      </div>
-      <button class="small danger" style="margin-left:8px; padding: 8px;" onclick="deleteStock('${s.id}')">✕</button>
+    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
+      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
+      <div class="stock-controls"><button onclick="updateFoodQty('${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateFoodQty('${s.id}', 1)">+</button></div>
+      <button class="small danger" style="margin-left:8px;" onclick="deleteFood('${s.id}')">✕</button>
     </div>`;
   }).join('');
 }
-function addStock() {
-  const name = document.getElementById('stockName').value.trim();
-  const cat = document.getElementById('stockCat').value;
-  const qty = parseInt(document.getElementById('stockQty').value);
-  const min = parseInt(document.getElementById('stockMin').value);
-  if (!name) return toast('⚠️ Nom du produit ?');
-  if (isNaN(qty) || isNaN(min)) return toast('⚠️ Quantités invalides');
-  
-  state.stocks.push({ id: uid(), name, category: cat, qty, min });
-  save('stocks', state.stocks);
-  toast('✅ Produit ajouté');
-  document.getElementById('stockName').value = '';
-  document.getElementById('stockQty').value = '';
-  document.getElementById('stockMin').value = '';
-  renderAll();
+function addFood() {
+  const name = document.getElementById('foodName').value.trim(); const qty = parseInt(document.getElementById('foodQty').value); const min = parseInt(document.getElementById('foodMin').value);
+  if (!name || isNaN(qty) || isNaN(min)) return toast('⚠️ Champs invalides');
+  state.foods.push({ id: uid(), name, qty, min }); save('foods', state.foods); toast('✅ Ajouté'); document.getElementById('foodName').value = ''; document.getElementById('foodQty').value = ''; document.getElementById('foodMin').value = ''; renderAll();
 }
-function updateStockQty(id, delta) {
-  const item = state.stocks.find(s => s.id === id);
-  if (item) {
-    item.qty += delta;
-    if (item.qty < 0) item.qty = 0;
-    save('stocks', state.stocks);
-    renderAll();
-  }
-}
-function deleteStock(id) {
-  if (confirm('Supprimer ce produit ?')) { state.stocks = state.stocks.filter(s => s.id !== id); save('stocks', state.stocks); renderAll(); }
-}
+function updateFoodQty(id, d) { const i = state.foods.find(s => s.id === id); if (i) { i.qty += d; if (i.qty < 0) i.qty = 0; save('foods', state.foods); renderAll(); } }
+function deleteFood(id) { if (confirm('Supprimer ?')) { state.foods = state.foods.filter(s => s.id !== id); save('foods', state.foods); renderAll(); } }
 
-/* --- ENFANTS --- */
-function renderChildren() {
-  const list = document.getElementById('childList');
-  if (state.children.length === 0) { list.innerHTML = '<div class="empty">Aucun enfant enregistré</div>'; return; }
-  list.innerHTML = state.children.map(c => `
-    <div class="list-item">
-      <div class="info">
-        <div class="title">${c.name} ${c.group ? '<span class="alert-badge badge-ok" style="background:#e2e8f0; color:var(--text)">'+c.group+'</span>' : ''}</div>
-        <div class="detail" style="color: var(--danger); font-weight: 600;">${c.allergens ? '⚠️ ' + c.allergens : '<span style="color:var(--success)">Aucun allergène</span>'}</div>
-      </div>
-      <button class="small danger" onclick="deleteChild('${c.id}')">✕</button>
-    </div>`).join('');
+/* --- COUCHES --- */
+function renderDiapers() {
+  const list = document.getElementById('diaperList'); if (state.diapers.length === 0) { list.innerHTML = '<div class="empty">Aucun produit d\'hygiène</div>'; return; }
+  list.innerHTML = state.diapers.map(s => {
+    const isLow = s.qty <= s.min;
+    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
+      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
+      <div class="stock-controls"><button onclick="updateDiaperQty('${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateDiaperQty('${s.id}', 1)">+</button></div>
+      <button class="small danger" style="margin-left:8px;" onclick="deleteDiaper('${s.id}')">✕</button>
+    </div>`;
+  }).join('');
 }
-function openChildForm() { document.getElementById('childFormCard').style.display = 'block'; document.getElementById('childName').value = ''; document.getElementById('childGroup').value = ''; document.getElementById('childAllergens').value = ''; document.getElementById('childFormCard').scrollIntoView({behavior:'smooth'}); }
-function closeChildForm() { document.getElementById('childFormCard').style.display = 'none'; }
-function saveChild() {
-  if (!document.getElementById('childName').value.trim()) return toast('⚠️ Prénom ?');
-  state.children.push({ id: uid(), name: document.getElementById('childName').value.trim(), group: document.getElementById('childGroup').value.trim(), allergens: document.getElementById('childAllergens').value.trim() });
-  save('children', state.children); toast('✅ Enfant ajouté'); closeChildForm(); renderAll();
+function addDiaper() {
+  const name = document.getElementById('diaperName').value.trim(); const qty = parseInt(document.getElementById('diaperQty').value); const min = parseInt(document.getElementById('diaperMin').value);
+  if (!name || isNaN(qty) || isNaN(min)) return toast('⚠️ Champs invalides');
+  state.diapers.push({ id: uid(), name, qty, min }); save('diapers', state.diapers); toast('✅ Ajouté'); document.getElementById('diaperName').value = ''; document.getElementById('diaperQty').value = ''; document.getElementById('diaperMin').value = ''; renderAll();
 }
-function deleteChild(id) { if (confirm('Supprimer ?')) { state.children = state.children.filter(c => c.id !== id); save('children', state.children); renderAll(); } }
+function updateDiaperQty(id, d) { const i = state.diapers.find(s => s.id === id); if (i) { i.qty += d; if (i.qty < 0) i.qty = 0; save('diapers', state.diapers); renderAll(); } }
+function deleteDiaper(id) { if (confirm('Supprimer ?')) { state.diapers = state.diapers.filter(s => s.id !== id); save('diapers', state.diapers); renderAll(); } }
 
 /* --- NETTOYAGE --- */
 function renderCleans() {
-  const list = document.getElementById('cleanList');
-  if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
-  list.innerHTML = state.cleans.sort((a,b) => new Date(b.ts) - new Date(a.ts)).slice(0, 20).map(c => `
-    <div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteClean('${c.id}')">✕</button></div>
-  `).join('');
+  const list = document.getElementById('cleanList'); if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
+  list.innerHTML = state.cleans.sort((a,b) => new Date(b.ts) - new Date(a.ts)).slice(0, 20).map(c => `<div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteClean('${c.id}')">✕</button></div>`).join('');
 }
-function openCleanForm() { document.getElementById('cleanFormCard').style.display = 'block'; document.getElementById('cleanTask').value = ''; document.getElementById('cleanOperator').value = ''; document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'}); }
+function openCleanForm() { document.getElementById('cleanFormCard').style.display = 'block'; document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'}); }
 function closeCleanForm() { document.getElementById('cleanFormCard').style.display = 'none'; }
 function saveClean() {
   if (!document.getElementById('cleanTask').value.trim() || !document.getElementById('cleanOperator').value.trim()) return toast('⚠️ Champs manquants');
@@ -818,16 +536,14 @@ function deleteClean(id) { if (confirm('Supprimer ?')) { state.cleans = state.cl
 function exportCSV() {
   const rows = [['Module', 'Date', 'Détail']];
   state.temps.forEach(t => rows.push(['HACCP Temp', t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}`]));
-  state.bibs.forEach(b => rows.push(['HACCP Biberon', b.ts, `${b.childName} - Eau ${b.waterTemp}°C - ${b.consumed?'Consommé':'Non consommé'}`]));
   state.samples.forEach(s => rows.push(['HACCP Témoin', s.ts, `${s.dish} - ${s.qty}g`]));
-  state.stocks.forEach(s => rows.push(['Stock', '-', `${s.name} (${s.category}) : Reste ${s.qty} (Seuil ${s.min})`]));
-  state.children.forEach(c => rows.push(['Enfants', '-', `${c.name} - Allergènes: ${c.allergens||'aucun'}`]));
+  state.foods.forEach(s => rows.push(['Aliments', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
+  state.diapers.forEach(s => rows.push(['Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
   state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `creche-data-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-data-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
   toast('📥 Export téléchargé !');
 }
 
