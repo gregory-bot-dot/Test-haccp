@@ -119,8 +119,20 @@
 
 <!-- Vue Tableau de bord -->
 <div class="view active" id="view-dashboard">
+  
+  <!-- 1. ACTIONS RAPIDES (En haut) -->
+  <div class="card">
+    <h2>⚡ Actions rapides</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
+      <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
+      <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
+      <button onclick="showView('services')" style="background: #718096;">🧽 Nettoyage</button>
+    </div>
+  </div>
+
+  <!-- 2. CHIFFRES / STATS (En bas) -->
   <div class="stat-grid">
-    <!-- Blocs cliquables -->
     <div class="stat" id="statTemp" onclick="showView('haccp')">
       <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
     </div>
@@ -134,23 +146,13 @@
       <div class="num" id="dashDiaperCount">0</div><div class="lbl">Alertes Couches</div>
     </div>
   </div>
-  
-  <!-- ACTIONS RAPIDES (Déplacées en haut) -->
-  <div class="card">
-    <h2>⚡ Actions rapides</h2>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
-      <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
-      <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
-      <button onclick="showView('services')" style="background: #718096;">🧽 Nettoyage</button>
-    </div>
-  </div>
 
-  <!-- CENTRE D'ALERTES (Déplacé en bas) -->
+  <!-- 3. CENTRE D'ALERTES (Tout en bas) -->
   <div class="card">
     <h2>🚨 Centre d'alertes</h2>
     <div id="alertsList"></div>
   </div>
+  
 </div>
 
 <!-- Vue HACCP (Températures & Témoins) -->
