@@ -101,6 +101,8 @@
   .stock-controls button:active { background: var(--border); }
   .stock-controls span { font-weight: 700; font-size: 16px; min-width: 24px; text-align: center; }
 
+  .history-log { font-size: 12px; color: var(--muted); border-left: 3px solid var(--border); padding-left: 10px; margin-bottom: 8px; }
+
   .toast {
     position: fixed; bottom: 90px; left: 16px; right: 16px;
     background: var(--text); color: white; padding: 14px 16px;
@@ -119,7 +121,6 @@
 
 <!-- Vue Tableau de bord -->
 <div class="view active" id="view-dashboard">
-  
   <!-- 1. ACTIONS RAPIDES (En haut) -->
   <div class="card">
     <h2>⚡ Actions rapides</h2>
@@ -131,7 +132,7 @@
     </div>
   </div>
 
-  <!-- 2. CHIFFRES / STATS (En bas) -->
+  <!-- 2. CHIFFRES / STATS (Au milieu) -->
   <div class="stat-grid">
     <div class="stat" id="statTemp" onclick="showView('haccp')">
       <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
@@ -147,29 +148,27 @@
     </div>
   </div>
 
-  <!-- 3. CENTRE D'ALERTES (Tout en bas) -->
+  <!-- 3. CENTRE D'ALERTES (En bas) -->
   <div class="card">
     <h2>🚨 Centre d'alertes</h2>
     <div id="alertsList"></div>
   </div>
-  
 </div>
 
-<!-- Vue HACCP (Températures & Témoins) -->
+<!-- Vue HACCP -->
 <div class="view" id="view-haccp">
   <div class="tabs">
     <button class="active" onclick="switchHaccpTab('tab-temp')">🌡️ Températures</button>
     <button onclick="switchHaccpTab('tab-samples')">🍽️ Plats témoins</button>
   </div>
 
-  <!-- Sous-vue Températures -->
   <div id="tab-temp" class="haccp-subview">
     <button onclick="openTempForm()" style="margin-bottom: 16px;">➕ Nouveau contrôle</button>
     <div class="card" id="tempFormCard" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0;">
       <h2>Nouveau contrôle</h2>
       <label>Type de contrôle</label>
       <select id="tempType" onchange="updateTempFields()">
-        <option value="daily">🌡️ Température quotidienne (Frigo)</option>
+        <option value="daily">🌡️ Température quotidienne</option>
         <option value="delivery">🚚 Réception livraison</option>
         <option value="preheat">🍲 Contrôle avant chauffe</option>
         <option value="reheat">🔥 Contrôle remise en chauffe</option>
@@ -186,7 +185,6 @@
         <select id="tempProductType">
           <option value="frais">Frais (≤ 4°C)</option>
           <option value="surgelé">Surgelé (≤ -18°C)</option>
-          <option value="sec">Épicerie sèche</option>
         </select>
       </div>
       <div id="fields-dish" style="display:none">
@@ -219,7 +217,6 @@
     </div>
   </div>
 
-  <!-- Sous-vue Plats Témoins -->
   <div id="tab-samples" class="haccp-subview" style="display:none">
     <button onclick="openSampleForm()" style="margin-bottom: 16px;">➕ Nouveau plat témoin</button>
     <div class="card" id="sampleFormCard" style="display:none; background: #f8fafc;">
@@ -238,7 +235,7 @@
       <button onclick="closeSampleForm()" class="secondary">Annuler</button>
     </div>
     <div class="card">
-      <h2>Historique (Conservation 5 jours)</h2>
+      <h2>Historique (5 jours)</h2>
       <div id="sampleList"></div>
     </div>
   </div>
@@ -247,18 +244,36 @@
 <!-- Vue ALIMENTS -->
 <div class="view" id="view-aliments">
   <div class="card">
-    <h2>🥕 Stocks Aliments & Repas</h2>
+    <h2>🥕 Stocks Repas</h2>
+    
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 12px; font-size: 15px;">➕ Ajouter un produit</h3>
+      <h3 style="margin: 0 0 12px; font-size: 15px;">📦 Entrée de stock / Inventaire</h3>
+      
       <label>Nom du produit</label>
-      <input type="text" id="foodName" placeholder="ex: Purée de légumes, Lait en poudre...">
+      <input type="text" id="foodName" list="foodDatalist" placeholder="Choisir ou taper un produit...">
+      <datalist id="foodDatalist"></datalist>
+
+      <label>Type d'opération</label>
+      <select id="foodAction">
+        <option value="add">➕ Réassort (Ajouter au stock)</option>
+        <option value="set">📋 Inventaire (Définir le stock exact)</option>
+      </select>
+
       <div style="display: flex; gap: 12px;">
         <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10"></div>
         <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3"></div>
       </div>
-      <button onclick="addFood()" style="margin-top: 16px;">Enregistrer</button>
+      <label>Opérateur</label>
+      <input type="text" id="foodOperator" placeholder="Votre prénom">
+      
+      <button onclick="saveStockItem('food')" style="margin-top: 16px; background: #38a169;">💾 Valider le mouvement</button>
     </div>
+    
+    <h3 style="font-size: 15px; margin-bottom: 12px;">État actuel des stocks</h3>
     <div id="foodList"></div>
+    
+    <h3 style="font-size: 15px; margin: 20px 0 12px; color: var(--muted);">Historique des mouvements</h3>
+    <div id="foodHistory"></div>
   </div>
 </div>
 
@@ -266,17 +281,35 @@
 <div class="view" id="view-couches">
   <div class="card">
     <h2>🧷 Stocks Couches & Hygiène</h2>
+    
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-      <h3 style="margin: 0 0 12px; font-size: 15px;">➕ Ajouter un produit</h3>
+      <h3 style="margin: 0 0 12px; font-size: 15px;">📦 Entrée de stock / Inventaire</h3>
+      
       <label>Nom du produit</label>
-      <input type="text" id="diaperName" placeholder="ex: Couches T3, Lingettes, Liniment...">
+      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Choisir ou taper un produit...">
+      <datalist id="diaperDatalist"></datalist>
+
+      <label>Type d'opération</label>
+      <select id="diaperAction">
+        <option value="add">➕ Réassort (Ajouter au stock)</option>
+        <option value="set">📋 Inventaire (Définir le stock exact)</option>
+      </select>
+
       <div style="display: flex; gap: 12px;">
         <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10"></div>
         <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3"></div>
       </div>
-      <button onclick="addDiaper()" style="margin-top: 16px;">Enregistrer</button>
+      <label>Opérateur</label>
+      <input type="text" id="diaperOperator" placeholder="Votre prénom">
+      
+      <button onclick="saveStockItem('diaper')" style="margin-top: 16px; background: #d53f8c;">💾 Valider le mouvement</button>
     </div>
+    
+    <h3 style="font-size: 15px; margin-bottom: 12px;">État actuel des stocks</h3>
     <div id="diaperList"></div>
+
+    <h3 style="font-size: 15px; margin: 20px 0 12px; color: var(--muted);">Historique des mouvements</h3>
+    <div id="diaperHistory"></div>
   </div>
 </div>
 
@@ -332,7 +365,8 @@ function save(key, val) { try { localStorage.setItem('creche_' + key, JSON.strin
 
 let state = {
   temps: load('temps', []), samples: load('samples', []), cleans: load('cleans', []),
-  foods: load('foods', []), diapers: load('diapers', []), equipment: load('equipment', DEFAULT_EQUIPMENT)
+  foods: load('foods', []), diapers: load('diapers', []), equipment: load('equipment', DEFAULT_EQUIPMENT),
+  stockLogs: load('stockLogs', [])
 };
 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
@@ -387,7 +421,7 @@ function switchHaccpTab(tabId) {
 
 // ============ RENDU ============
 function renderAll() {
-  renderDashboard(); renderTemp(); renderSamples(); renderFoods(); renderDiapers(); renderCleans();
+  renderDashboard(); renderTemp(); renderSamples(); renderStocks(); renderCleans(); updateDatalists();
 }
 
 function renderDashboard() {
@@ -413,6 +447,131 @@ function renderDashboard() {
   const list = document.getElementById('alertsList');
   if (alerts.length === 0) list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
   else list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
+}
+
+/* --- GESTION DES STOCKS (Aliments & Couches) --- */
+function updateDatalists() {
+  document.getElementById('foodDatalist').innerHTML = state.foods.map(f => `<option value="${f.name}">`).join('');
+  document.getElementById('diaperDatalist').innerHTML = state.diapers.map(d => `<option value="${d.name}">`).join('');
+}
+
+function saveStockItem(category) {
+  const prefix = category === 'food' ? 'food' : 'diaper';
+  const name = document.getElementById(prefix + 'Name').value.trim();
+  const qty = parseInt(document.getElementById(prefix + 'Qty').value);
+  const min = parseInt(document.getElementById(prefix + 'Min').value);
+  const action = document.getElementById(prefix + 'Action').value; // 'add' ou 'set'
+  const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
+
+  if (!name) return toast('⚠️ Indiquez le nom du produit');
+  if (isNaN(qty) || qty < 0) return toast('⚠️ Indiquez une quantité valide');
+  
+  let list = category === 'food' ? state.foods : state.diapers;
+  let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
+  
+  let logMessage = "";
+  let logType = "in";
+
+  if (existingItem) {
+    if (action === 'set') {
+      logMessage = `${operator} a mis à jour l'inventaire de ${name} (Nouveau stock: ${qty})`;
+      logType = "set";
+      existingItem.qty = qty;
+    } else {
+      logMessage = `${operator} a ajouté ${qty} ${name} (Réassort)`;
+      logType = "in";
+      existingItem.qty += qty;
+    }
+    if (!isNaN(min) && document.getElementById(prefix + 'Min').value !== '') {
+      existingItem.min = min;
+    }
+  } else {
+    // Nouveau produit
+    const finalMin = isNaN(min) ? 3 : min;
+    list.push({ id: uid(), name, qty, min: finalMin });
+    logMessage = `${operator} a créé le produit ${name} avec un stock de départ de ${qty}`;
+    logType = "create";
+  }
+
+  // Ajout au journal
+  state.stockLogs.unshift({
+    id: uid(),
+    ts: new Date().toISOString(),
+    category: category,
+    itemName: name,
+    type: logType,
+    qty: qty,
+    operator: operator,
+    message: logMessage
+  });
+  
+  // On garde seulement les 50 derniers logs pour ne pas surcharger
+  if (state.stockLogs.length > 50) state.stockLogs.pop();
+
+  save(category === 'food' ? 'foods' : 'diapers', list);
+  save('stockLogs', state.stockLogs);
+  
+  toast(`✅ Mouvement enregistré !`);
+  
+  // Reset form
+  document.getElementById(prefix + 'Name').value = '';
+  document.getElementById(prefix + 'Qty').value = '';
+  document.getElementById(prefix + 'Min').value = '';
+  document.getElementById(prefix + 'Operator').value = '';
+  
+  renderAll();
+}
+
+function renderStocks() {
+  // Rendu Aliments
+  const foodList = document.getElementById('foodList');
+  foodList.innerHTML = state.foods.length === 0 ? '<div class="empty">Aucun repas en stock</div>' : state.foods.map(s => {
+    const isLow = s.qty <= s.min;
+    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
+      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
+      <div class="stock-controls"><button onclick="updateStockQty('food', '${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateStockQty('food', '${s.id}', 1)">+</button></div>
+    </div>`;
+  }).join('');
+
+  // Rendu Couches
+  const diaperList = document.getElementById('diaperList');
+  diaperList.innerHTML = state.diapers.length === 0 ? '<div class="empty">Aucun produit d\'hygiène en stock</div>' : state.diapers.map(s => {
+    const isLow = s.qty <= s.min;
+    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
+      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
+      <div class="stock-controls"><button onclick="updateStockQty('diaper', '${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateStockQty('diaper', '${s.id}', 1)">+</button></div>
+    </div>`;
+  }).join('');
+
+  // Rendu Historique
+  const renderLogs = (cat) => {
+    const logs = state.stockLogs.filter(l => l.category === cat);
+    if(logs.length === 0) return '<div class="empty">Aucun mouvement récent</div>';
+    return logs.map(l => `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message}</div>`).join('');
+  };
+  document.getElementById('foodHistory').innerHTML = renderLogs('food');
+  document.getElementById('diaperHistory').innerHTML = renderLogs('diaper');
+}
+
+function updateStockQty(category, id, delta) {
+  let list = category === 'food' ? state.foods : state.diapers;
+  const item = list.find(s => s.id === id);
+  if (item) {
+    item.qty += delta;
+    if (item.qty < 0) item.qty = 0;
+    
+    // Logger l'action rapide
+    state.stockLogs.unshift({
+      id: uid(), ts: new Date().toISOString(), category: category,
+      itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Utilisation rapide",
+      message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`
+    });
+    if (state.stockLogs.length > 50) state.stockLogs.pop();
+
+    save(category === 'food' ? 'foods' : 'diapers', list);
+    save('stockLogs', state.stockLogs);
+    renderAll();
+  }
 }
 
 /* --- TEMPÉRATURES --- */
@@ -478,46 +637,6 @@ function saveSample() {
 }
 function deleteSample(id) { if (confirm('Supprimer ?')) { state.samples = state.samples.filter(s => s.id !== id); save('samples', state.samples); renderAll(); } }
 
-/* --- ALIMENTS --- */
-function renderFoods() {
-  const list = document.getElementById('foodList'); if (state.foods.length === 0) { list.innerHTML = '<div class="empty">Aucun aliment en stock</div>'; return; }
-  list.innerHTML = state.foods.map(s => {
-    const isLow = s.qty <= s.min;
-    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
-      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
-      <div class="stock-controls"><button onclick="updateFoodQty('${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateFoodQty('${s.id}', 1)">+</button></div>
-      <button class="small danger" style="margin-left:8px;" onclick="deleteFood('${s.id}')">✕</button>
-    </div>`;
-  }).join('');
-}
-function addFood() {
-  const name = document.getElementById('foodName').value.trim(); const qty = parseInt(document.getElementById('foodQty').value); const min = parseInt(document.getElementById('foodMin').value);
-  if (!name || isNaN(qty) || isNaN(min)) return toast('⚠️ Champs invalides');
-  state.foods.push({ id: uid(), name, qty, min }); save('foods', state.foods); toast('✅ Ajouté'); document.getElementById('foodName').value = ''; document.getElementById('foodQty').value = ''; document.getElementById('foodMin').value = ''; renderAll();
-}
-function updateFoodQty(id, d) { const i = state.foods.find(s => s.id === id); if (i) { i.qty += d; if (i.qty < 0) i.qty = 0; save('foods', state.foods); renderAll(); } }
-function deleteFood(id) { if (confirm('Supprimer ?')) { state.foods = state.foods.filter(s => s.id !== id); save('foods', state.foods); renderAll(); } }
-
-/* --- COUCHES --- */
-function renderDiapers() {
-  const list = document.getElementById('diaperList'); if (state.diapers.length === 0) { list.innerHTML = '<div class="empty">Aucun produit d\'hygiène</div>'; return; }
-  list.innerHTML = state.diapers.map(s => {
-    const isLow = s.qty <= s.min;
-    return `<div class="stock-item" style="${isLow ? 'background: #fff5f5; border-color: #feb2b2;' : ''}">
-      <div class="stock-info"><div class="stock-name" style="${isLow ? 'color: var(--danger);' : ''}">${s.name}</div><div class="stock-qty">Seuil: ${s.min}</div></div>
-      <div class="stock-controls"><button onclick="updateDiaperQty('${s.id}', -1)">-</button><span>${s.qty}</span><button onclick="updateDiaperQty('${s.id}', 1)">+</button></div>
-      <button class="small danger" style="margin-left:8px;" onclick="deleteDiaper('${s.id}')">✕</button>
-    </div>`;
-  }).join('');
-}
-function addDiaper() {
-  const name = document.getElementById('diaperName').value.trim(); const qty = parseInt(document.getElementById('diaperQty').value); const min = parseInt(document.getElementById('diaperMin').value);
-  if (!name || isNaN(qty) || isNaN(min)) return toast('⚠️ Champs invalides');
-  state.diapers.push({ id: uid(), name, qty, min }); save('diapers', state.diapers); toast('✅ Ajouté'); document.getElementById('diaperName').value = ''; document.getElementById('diaperQty').value = ''; document.getElementById('diaperMin').value = ''; renderAll();
-}
-function updateDiaperQty(id, d) { const i = state.diapers.find(s => s.id === id); if (i) { i.qty += d; if (i.qty < 0) i.qty = 0; save('diapers', state.diapers); renderAll(); } }
-function deleteDiaper(id) { if (confirm('Supprimer ?')) { state.diapers = state.diapers.filter(s => s.id !== id); save('diapers', state.diapers); renderAll(); } }
-
 /* --- NETTOYAGE --- */
 function renderCleans() {
   const list = document.getElementById('cleanList'); if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
@@ -537,8 +656,9 @@ function exportCSV() {
   const rows = [['Module', 'Date', 'Détail']];
   state.temps.forEach(t => rows.push(['HACCP Temp', t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}`]));
   state.samples.forEach(s => rows.push(['HACCP Témoin', s.ts, `${s.dish} - ${s.qty}g`]));
-  state.foods.forEach(s => rows.push(['Aliments', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
-  state.diapers.forEach(s => rows.push(['Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
+  state.foods.forEach(s => rows.push(['Stock Repas', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
+  state.diapers.forEach(s => rows.push(['Stock Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
+  state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, l.message]));
   state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
