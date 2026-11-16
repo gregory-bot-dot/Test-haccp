@@ -19,6 +19,23 @@
     margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg); color: var(--text); font-size: 16px; padding-bottom: 80px;
   }
+  
+  /* ÉCRAN DE CONNEXION */
+  #login-screen {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+  }
+  .login-box {
+    background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;
+  }
+  .login-box h1 { margin: 0 0 10px; font-size: 24px; color: var(--primary); }
+  .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .login-box input { margin-bottom: 15px; }
+  .login-box button { background: var(--primary); font-size: 16px; padding: 15px; }
+  
+  /* APPLICATION CACHÉE AU DEPART */
+  #app-content { display: none; }
+
   header {
     background: var(--primary); color: white; padding: 16px;
     position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -126,14 +143,14 @@
     position: fixed; bottom: 90px; left: 16px; right: 16px;
     background: var(--text); color: white; padding: 14px 16px;
     border-radius: 12px; font-size: 14px; text-align: center; font-weight: 500;
-    z-index: 200; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 20000; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   .toast.show { opacity: 1; transform: translateY(-10px); }
 
   #print-report { display: none; }
   @media print {
     body { background: white; padding: 0; font-size: 12px; }
-    .view, nav, header, .toast { display: none !important; }
+    .view, nav, header, .toast, #login-screen { display: none !important; }
     #print-report { display: block !important; padding: 20px; }
     .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
     .report-header h1 { margin: 0; font-size: 24px; }
@@ -146,225 +163,259 @@
     .report-table .danger-text { color: red; font-weight: bold; }
   }
 </style>
-<!-- FIREBASE SDK (App, Firestore & Auth) -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-<div id="print-report"></div>
-
-<header>
-  <h1 id="headerTitle">🏡 Espace Crèche</h1>
-  <div class="sub" id="headerSub">Tableau de bord multiservices</div>
-</header>
-
-<!-- Vue Tableau de bord -->
-<div class="view active" id="view-dashboard">
-  <div class="card">
-    <h2>⚡ Actions rapides</h2>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
-      <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
-      <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
-      <button onclick="showView('soins')" style="background: #805ad5;">💊 Pharmacie</button>
-    </div>
-  </div>
-
-  <div class="stat-grid">
-    <div class="stat" id="statTemp" onclick="showView('haccp')">
-      <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
-    </div>
-    <div class="stat danger" id="statAlerts" onclick="document.getElementById('alertsList').scrollIntoView({behavior:'smooth'})">
-      <div class="num" id="dashAlertsCount">0</div><div class="lbl">Alertes globales</div>
-    </div>
-    <div class="stat warn" id="statStockFood" onclick="showView('aliments')">
-      <div class="num" id="dashFoodCount">0</div><div class="lbl">Alertes Aliments</div>
-    </div>
-    <div class="stat warn" id="statPharma" onclick="showView('soins')">
-      <div class="num" id="dashPharmaCount">0</div><div class="lbl">Alertes Pharmacie</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>🚨 Centre d'alertes</h2>
-    <div id="alertsList"></div>
+<!-- ÉCRAN DE CONNEXION -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🏡 Espace Crèche</h1>
+    <p>Veuillez vous identifier pour accéder à l'application.</p>
+    <input type="email" id="loginEmail" placeholder="Adresse email" autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Mot de passe" autocomplete="current-password">
+    <button onclick="loginUser()">Se connecter</button>
+    <p id="loginError" style="color: var(--danger); font-weight: bold; margin-top: 15px; display: none;"></p>
   </div>
 </div>
 
-<!-- Vue HACCP -->
-<div class="view" id="view-haccp">
-  <div class="tabs">
-    <button class="active" onclick="switchHaccpTab('tab-temp')">🌡️ Températures</button>
-    <button onclick="switchHaccpTab('tab-samples')">🍽️ Plats témoins</button>
-  </div>
+<!-- CONTENU DE L'APPLICATION -->
+<div id="app-content">
+  <div id="print-report"></div>
 
-  <div id="tab-temp" class="haccp-subview">
-    <button onclick="openTempForm()" style="margin-bottom: 16px;">➕ Nouveau contrôle</button>
-    <div class="card" id="tempFormCard" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0;">
-      <h2>Nouveau contrôle</h2>
-      <label>Type de contrôle</label>
-      <select id="tempType" onchange="updateTempFields()">
-        <option value="daily">🌡️ Température quotidienne</option>
-        <option value="delivery">🚚 Réception livraison</option>
-        <option value="preheat">🍲 Contrôle avant chauffe</option>
-        <option value="reheat">🔥 Contrôle remise en chauffe</option>
-      </select>
-      <div id="fields-daily"><label>Équipement</label><select id="tempEquip"></select></div>
-      <div id="fields-delivery" style="display:none">
-        <label>Fournisseur</label><input type="text" id="tempSupplier" placeholder="ex: Pomona...">
-        <label>Type de produit</label><select id="tempProductType"><option value="frais">Frais (≤ 4°C)</option><option value="surgelé">Surgelé (≤ -18°C)</option></select>
-      </div>
-      <div id="fields-dish" style="display:none"><label>Nom du plat</label><input type="text" id="tempDish" placeholder="ex: Purée de carottes"></div>
-      <label>Température mesurée (°C)</label><input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
-      <label>Opérateur</label><input type="text" id="tempOperator" placeholder="Votre prénom">
-      <label>Action corrective (si hors norme)</label><textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
-      <label>📸 Photo (optionnel)</label><input type="file" id="tempPhoto" accept="image/*" capture="environment">
-      <button onclick="saveTemp()">💾 Enregistrer</button><button onclick="closeTempForm()" class="secondary">Annuler</button>
-    </div>
+  <header>
+    <h1 id="headerTitle">🏡 Espace Crèche</h1>
+    <div class="sub" id="headerSub">Tableau de bord multiservices</div>
+  </header>
+
+  <!-- Vue Tableau de bord -->
+  <div class="view active" id="view-dashboard">
+    
+    <!-- 1. ACTIONS RAPIDES -->
     <div class="card">
-      <div class="tabs" id="tempTabs"><button class="active" onclick="filterTemp('today')">Aujourd'hui</button><button onclick="filterTemp('week')">7 jours</button><button onclick="filterTemp('all')">Tout</button></div>
-      <div id="tempList"></div>
-    </div>
-  </div>
-
-  <div id="tab-samples" class="haccp-subview" style="display:none">
-    <button onclick="openSampleForm()" style="margin-bottom: 16px;">➕ Nouveau plat témoin</button>
-    <div class="card" id="sampleFormCard" style="display:none; background: #f8fafc;">
-      <h2>Enregistrer un plat témoin</h2>
-      <label>Date du repas</label><input type="date" id="sampleDate">
-      <label>Plat</label><input type="text" id="sampleDish" placeholder="ex: Purée carottes">
-      <label>Quantité (g)</label><input type="number" id="sampleQty" placeholder="ex: 100">
-      <label>Opérateur</label><input type="text" id="sampleOperator" placeholder="Votre prénom">
-      <button onclick="saveSample()">💾 Enregistrer</button><button onclick="closeSampleForm()" class="secondary">Annuler</button>
-    </div>
-    <div class="card"><h2>Historique (5 jours)</h2><div id="sampleList"></div></div>
-  </div>
-</div>
-
-<!-- Vue ALIMENTS -->
-<div class="view" id="view-aliments">
-  <div class="card">
-    <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Repas)</h2>
-    <div id="foodList" style="margin-bottom: 24px;"></div>
-    <h2>🥕 Mouvement de Stock</h2>
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
-      <label style="margin-top:0;">Nom du produit</label>
-      <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;">
-      <datalist id="foodDatalist"></datalist>
-      <label>Type de mouvement</label>
-      <div class="action-toggle">
-        <input type="radio" id="foodActAdd" name="foodAction" value="add" checked><label for="foodActAdd">➕ Ajouter</label>
-        <input type="radio" id="foodActSet" name="foodAction" value="set"><label for="foodActSet">✏️ Modifier</label>
+      <h2>⚡ Actions rapides</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button onclick="showView('haccp'); openTempForm()" style="background: #3182ce;">🌡️ Température</button>
+        <button onclick="showView('aliments')" style="background: #38a169;">🥕 Stock Repas</button>
+        <button onclick="showView('couches')" style="background: #d53f8c;">🧷 Stock Couches</button>
+        <button onclick="showView('soins')" style="background: #805ad5;">💊 Pharmacie</button>
       </div>
-      <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10" style="background: white;"></div>
-        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3" style="background: white;"></div>
-      </div>
-      <label>Opérateur</label><input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
-      <label>📸 Photo (bon de livraison...)</label>
-      <input type="file" id="foodPhoto" accept="image/*" capture="environment" style="background: white;">
-      <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider</button>
     </div>
-    <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
-    <div id="foodHistory"></div>
-  </div>
-</div>
 
-<!-- Vue COUCHES -->
-<div class="view" id="view-couches">
-  <div class="card">
-    <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Couches)</h2>
-    <div id="diaperList" style="margin-bottom: 24px;"></div>
-    <h2>🧷 Mouvement de Stock</h2>
-    <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
-      <label style="margin-top:0;">Nom du produit</label>
-      <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;">
-      <datalist id="diaperDatalist"></datalist>
-      <label>Type de mouvement</label>
-      <div class="action-toggle">
-        <input type="radio" id="diaperActAdd" name="diaperAction" value="add" checked><label for="diaperActAdd">➕ Ajouter</label>
-        <input type="radio" id="diaperActSet" name="diaperAction" value="set"><label for="diaperActSet">✏️ Modifier</label>
-      </div>
-      <div style="display: flex; gap: 12px;">
-        <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10" style="background: white;"></div>
-        <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;"></div>
-      </div>
-      <label>Opérateur</label><input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
-      <label>📸 Photo (bon de livraison...)</label>
-      <input type="file" id="diaperPhoto" accept="image/*" capture="environment" style="background: white;">
-      <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider</button>
-    </div>
-    <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
-    <div id="diaperHistory"></div>
-  </div>
-</div>
-
-<!-- Vue SOINS & ADMIN -->
-<div class="view" id="view-soins">
-  <div class="tabs">
-    <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
-    <button onclick="switchSoinsTab('tab-clean')">🧽 Nettoyage</button>
-    <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
-  </div>
-
-  <div id="tab-pharma" class="soins-subview">
+    <!-- 2. CENTRE D'ALERTES (Au milieu) -->
     <div class="card">
-      <h2>💊 Stock Pharmacie</h2>
-      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
-        <label style="margin-top:0;">Nom du produit</label>
-        <input type="text" id="pharmaName" list="pharmaDatalist" placeholder="Doliprane, Sérum phy..." style="background: white;">
-        <datalist id="pharmaDatalist"></datalist>
-        <div style="display: flex; gap: 12px;">
-          <div style="flex: 1;"><label>Quantité</label><input type="number" id="pharmaQty" placeholder="ex: 2" style="background: white;"></div>
-          <div style="flex: 1;"><label>Date de péremption</label><input type="date" id="pharmaExp" style="background: white;"></div>
+      <h2>🚨 Centre d'alertes</h2>
+      <div id="alertsList"></div>
+    </div>
+
+    <!-- 3. CHIFFRES / STATS (En bas) -->
+    <div class="stat-grid">
+      <div class="stat" id="statTemp" onclick="showView('haccp')">
+        <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
+      </div>
+      <div class="stat danger" id="statAlerts" onclick="document.getElementById('alertsList').scrollIntoView({behavior:'smooth'})">
+        <div class="num" id="dashAlertsCount">0</div><div class="lbl">Alertes globales</div>
+      </div>
+      <div class="stat warn" id="statStockFood" onclick="showView('aliments')">
+        <div class="num" id="dashFoodCount">0</div><div class="lbl">Alertes Aliments</div>
+      </div>
+      <div class="stat warn" id="statPharma" onclick="showView('soins')">
+        <div class="num" id="dashPharmaCount">0</div><div class="lbl">Alertes Pharmacie</div>
+      </div>
+    </div>
+
+    <!-- 4. NOUVEAU BLOC EXPORT & SAUVEGARDE -->
+    <div class="card">
+      <h2>📤 Export & Sauvegarde</h2>
+      <p class="meta" style="margin-bottom: 12px;">Générez vos rapports pour la PMI ou exportez vos données.</p>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 0;">📄 Rapport PDF</button>
+        <button onclick="exportCSV()" class="secondary" style="margin-top: 0; border: 1px solid var(--border);">📊 Données CSV</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Vue HACCP -->
+  <div class="view" id="view-haccp">
+    <div class="tabs">
+      <button class="active" onclick="switchHaccpTab('tab-temp')">🌡️ Températures</button>
+      <button onclick="switchHaccpTab('tab-samples')">🍽️ Plats témoins</button>
+    </div>
+
+    <div id="tab-temp" class="haccp-subview">
+      <button onclick="openTempForm()" style="margin-bottom: 16px;">➕ Nouveau contrôle</button>
+      <div class="card" id="tempFormCard" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0;">
+        <h2>Nouveau contrôle</h2>
+        <label>Type de contrôle</label>
+        <select id="tempType" onchange="updateTempFields()">
+          <option value="daily">🌡️ Température quotidienne</option>
+          <option value="delivery">🚚 Réception livraison</option>
+          <option value="preheat">🍲 Contrôle avant chauffe</option>
+          <option value="reheat">🔥 Contrôle remise en chauffe</option>
+        </select>
+        <div id="fields-daily"><label>Équipement</label><select id="tempEquip"></select></div>
+        <div id="fields-delivery" style="display:none">
+          <label>Fournisseur</label><input type="text" id="tempSupplier" placeholder="ex: Pomona...">
+          <label>Type de produit</label><select id="tempProductType"><option value="frais">Frais (≤ 4°C)</option><option value="surgelé">Surgelé (≤ -18°C)</option></select>
         </div>
-        <label>Opérateur</label><input type="text" id="pharmaOperator" placeholder="Votre prénom" style="background: white;">
-        <button onclick="savePharmaItem()" style="margin-top: 20px; background: #805ad5;">💾 Enregistrer</button>
+        <div id="fields-dish" style="display:none"><label>Nom du plat</label><input type="text" id="tempDish" placeholder="ex: Purée de carottes"></div>
+        <label>Température mesurée (°C)</label><input type="number" id="tempValue" step="0.1" inputmode="decimal" placeholder="ex: 3.5">
+        <label>Opérateur</label><input type="text" id="tempOperator" placeholder="Votre prénom">
+        <label>Action corrective (si hors norme)</label><textarea id="tempAction" rows="2" placeholder="Optionnel"></textarea>
+        <label>📸 Photo (optionnel)</label><input type="file" id="tempPhoto" accept="image/*" capture="environment">
+        <button onclick="saveTemp()">💾 Enregistrer</button><button onclick="closeTempForm()" class="secondary">Annuler</button>
       </div>
-      <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 Médicaments en stock</h2>
-      <div id="pharmaList"></div>
+      <div class="card">
+        <div class="tabs" id="tempTabs"><button class="active" onclick="filterTemp('today')">Aujourd'hui</button><button onclick="filterTemp('week')">7 jours</button><button onclick="filterTemp('all')">Tout</button></div>
+        <div id="tempList"></div>
+      </div>
+    </div>
+
+    <div id="tab-samples" class="haccp-subview" style="display:none">
+      <button onclick="openSampleForm()" style="margin-bottom: 16px;">➕ Nouveau plat témoin</button>
+      <div class="card" id="sampleFormCard" style="display:none; background: #f8fafc;">
+        <h2>Enregistrer un plat témoin</h2>
+        <label>Date du repas</label><input type="date" id="sampleDate">
+        <label>Plat</label><input type="text" id="sampleDish" placeholder="ex: Purée carottes">
+        <label>Quantité (g)</label><input type="number" id="sampleQty" placeholder="ex: 100">
+        <label>Opérateur</label><input type="text" id="sampleOperator" placeholder="Votre prénom">
+        <button onclick="saveSample()">💾 Enregistrer</button><button onclick="closeSampleForm()" class="secondary">Annuler</button>
+      </div>
+      <div class="card"><h2>Historique (5 jours)</h2><div id="sampleList"></div></div>
     </div>
   </div>
 
-  <div id="tab-clean" class="soins-subview" style="display:none">
+  <!-- Vue ALIMENTS -->
+  <div class="view" id="view-aliments">
     <div class="card">
-      <h2>🧽 Nettoyage quotidien</h2>
-      <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
-      <div id="cleanFormCard" style="display:none; background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 12px;">
-        <label>Zone</label>
-        <select id="cleanZone"><option>Biberonnerie</option><option>Zone de change</option><option>Cuisine</option><option>Réfectoire</option><option>Dortoir</option><option>Sanitaires</option><option>Salle de jeu</option></select>
-        <label>Tâche réalisée</label><input type="text" id="cleanTask" placeholder="ex: Désinfection des plans">
-        <label>Opérateur</label><input type="text" id="cleanOperator" placeholder="Votre prénom">
-        <button onclick="saveClean()">💾 Enregistrer</button><button onclick="closeCleanForm()" class="secondary">Annuler</button>
+      <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Repas)</h2>
+      <div id="foodList" style="margin-bottom: 24px;"></div>
+      <h2>🥕 Mouvement de Stock</h2>
+      <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
+        <label style="margin-top:0;">Nom du produit</label>
+        <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;">
+        <datalist id="foodDatalist"></datalist>
+        <label>Type de mouvement</label>
+        <div class="action-toggle">
+          <input type="radio" id="foodActAdd" name="foodAction" value="add" checked><label for="foodActAdd">➕ Ajouter</label>
+          <input type="radio" id="foodActSet" name="foodAction" value="set"><label for="foodActSet">✏️ Modifier</label>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1;"><label>Quantité</label><input type="number" id="foodQty" placeholder="ex: 10" style="background: white;"></div>
+          <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="foodMin" placeholder="ex: 3" style="background: white;"></div>
+        </div>
+        <label>Opérateur</label><input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
+        <label>📸 Photo (bon de livraison...)</label>
+        <input type="file" id="foodPhoto" accept="image/*" capture="environment" style="background: white;">
+        <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider</button>
       </div>
-      <div id="cleanList" style="margin-top: 16px;"></div>
+      <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
+      <div id="foodHistory"></div>
     </div>
   </div>
 
-  <div id="tab-admin" class="soins-subview" style="display:none">
+  <!-- Vue COUCHES -->
+  <div class="view" id="view-couches">
     <div class="card">
-      <h2>📄 Générateur de Rapport</h2>
-      <p class="meta">Génère un document propre avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
-      <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
-    </div>
-    <div class="card">
-      <h2>💾 Sauvegarde (CSV)</h2>
-      <p class="meta">Exporte toutes les données brutes dans un fichier tableur (Excel).</p>
-      <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
+      <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Couches)</h2>
+      <div id="diaperList" style="margin-bottom: 24px;"></div>
+      <h2>🧷 Mouvement de Stock</h2>
+      <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
+        <label style="margin-top:0;">Nom du produit</label>
+        <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;">
+        <datalist id="diaperDatalist"></datalist>
+        <label>Type de mouvement</label>
+        <div class="action-toggle">
+          <input type="radio" id="diaperActAdd" name="diaperAction" value="add" checked><label for="diaperActAdd">➕ Ajouter</label>
+          <input type="radio" id="diaperActSet" name="diaperAction" value="set"><label for="diaperActSet">✏️ Modifier</label>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <div style="flex: 1;"><label>Quantité</label><input type="number" id="diaperQty" placeholder="ex: 10" style="background: white;"></div>
+          <div style="flex: 1;"><label>Seuil d'alerte</label><input type="number" id="diaperMin" placeholder="ex: 3" style="background: white;"></div>
+        </div>
+        <label>Opérateur</label><input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
+        <label>📸 Photo (bon de livraison...)</label>
+        <input type="file" id="diaperPhoto" accept="image/*" capture="environment" style="background: white;">
+        <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider</button>
+      </div>
+      <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
+      <div id="diaperHistory"></div>
     </div>
   </div>
+
+  <!-- Vue SOINS & ADMIN -->
+  <div class="view" id="view-soins">
+    <div class="tabs">
+      <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
+      <button onclick="switchSoinsTab('tab-clean')">🧽 Nettoyage</button>
+      <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
+    </div>
+
+    <div id="tab-pharma" class="soins-subview">
+      <div class="card">
+        <h2>💊 Stock Pharmacie</h2>
+        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+          <label style="margin-top:0;">Nom du produit</label>
+          <input type="text" id="pharmaName" list="pharmaDatalist" placeholder="Doliprane, Sérum phy..." style="background: white;">
+          <datalist id="pharmaDatalist"></datalist>
+          <div style="display: flex; gap: 12px;">
+            <div style="flex: 1;"><label>Quantité</label><input type="number" id="pharmaQty" placeholder="ex: 2" style="background: white;"></div>
+            <div style="flex: 1;"><label>Date de péremption</label><input type="date" id="pharmaExp" style="background: white;"></div>
+          </div>
+          <label>Opérateur</label><input type="text" id="pharmaOperator" placeholder="Votre prénom" style="background: white;">
+          <button onclick="savePharmaItem()" style="margin-top: 20px; background: #805ad5;">💾 Enregistrer</button>
+        </div>
+        <h2 style="font-size: 15px; margin-bottom: 16px; color: var(--muted);">📋 Médicaments en stock</h2>
+        <div id="pharmaList"></div>
+      </div>
+    </div>
+
+    <div id="tab-clean" class="soins-subview" style="display:none">
+      <div class="card">
+        <h2>🧽 Nettoyage quotidien</h2>
+        <button onclick="openCleanForm()">➕ Enregistrer un nettoyage</button>
+        <div id="cleanFormCard" style="display:none; background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 12px;">
+          <label>Zone</label>
+          <select id="cleanZone"><option>Biberonnerie</option><option>Zone de change</option><option>Cuisine</option><option>Réfectoire</option><option>Dortoir</option><option>Sanitaires</option><option>Salle de jeu</option></select>
+          <label>Tâche réalisée</label><input type="text" id="cleanTask" placeholder="ex: Désinfection des plans">
+          <label>Opérateur</label><input type="text" id="cleanOperator" placeholder="Votre prénom">
+          <button onclick="saveClean()">💾 Enregistrer</button><button onclick="closeCleanForm()" class="secondary">Annuler</button>
+        </div>
+        <div id="cleanList" style="margin-top: 16px;"></div>
+      </div>
+    </div>
+
+    <div id="tab-admin" class="soins-subview" style="display:none">
+      <div class="card">
+        <h2>📄 Générateur de Rapport</h2>
+        <p class="meta">Génère un document propre avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
+        <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
+      </div>
+      <div class="card">
+        <h2>💾 Sauvegarde (CSV)</h2>
+        <p class="meta">Exporte toutes les données brutes dans un fichier tableur (Excel).</p>
+        <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
+      </div>
+      <div class="card" style="border: 1px solid #fed7d7;">
+        <h2 style="color: var(--danger);">🚪 Session</h2>
+        <p class="meta">L'application restera connectée sur cette tablette jusqu'à déconnexion manuelle.</p>
+        <button onclick="logoutUser()" class="danger">Se déconnecter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de navigation -->
+  <nav>
+    <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="icon">🏠</span>Accueil</button>
+    <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
+    <button data-view="aliments" onclick="showView('aliments')"><span class="icon">🥕</span>Aliments</button>
+    <button data-view="couches" onclick="showView('couches')"><span class="icon">🧷</span>Couches</button>
+    <button data-view="soins" onclick="showView('soins')"><span class="icon">💊</span>Soins</button>
+  </nav>
 </div>
-
-<!-- Barre de navigation -->
-<nav>
-  <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="icon">🏠</span>Accueil</button>
-  <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
-  <button data-view="aliments" onclick="showView('aliments')"><span class="icon">🥕</span>Aliments</button>
-  <button data-view="couches" onclick="showView('couches')"><span class="icon">🧷</span>Couches</button>
-  <button data-view="soins" onclick="showView('soins')"><span class="icon">💊</span>Soins</button>
-</nav>
 
 <div class="toast" id="toast"></div>
 
@@ -382,6 +433,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 // ============ DONNÉES ============
 const DEFAULT_EQUIPMENT = [
@@ -419,6 +471,47 @@ function compressImage(file) {
   });
 }
 
+// ============ AUTHENTIFICATION ============
+function loginUser() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorMsg = document.getElementById('loginError');
+  
+  if (!email || !password) { errorMsg.textContent = "Veuillez remplir tous les champs."; errorMsg.style.display = 'block'; return; }
+  
+  errorMsg.style.display = 'none';
+  auth.signInWithEmailAndPassword(email, password)
+    .catch((error) => {
+      console.error("Erreur de connexion:", error);
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMsg.textContent = "Email ou mot de passe incorrect.";
+      } else {
+        errorMsg.textContent = "Erreur : " + error.message;
+      }
+      errorMsg.style.display = 'block';
+    });
+}
+
+function logoutUser() {
+  if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+    auth.signOut();
+  }
+}
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    document.getElementById('loginPassword').value = '';
+    initApp();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-content').style.display = 'none';
+    state = { temps: [], samples: [], cleans: [], foods: [], diapers: [], pharma: [], stockLogs: [], equipment: DEFAULT_EQUIPMENT };
+    renderAll();
+  }
+});
+
 // ============ NAVIGATION ============
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -448,7 +541,7 @@ function switchSoinsTab(tabId) {
   event.target.classList.add('active');
 }
 
-// ============ SYNCHRONISATION FIREBASE (TEMPS RÉEL) ============
+// ============ SYNCHRONISATION FIREBASE ============
 function syncCollection(collectionName, stateVar) {
   db.collection(collectionName).onSnapshot(snapshot => {
     state[stateVar] = [];
@@ -459,12 +552,9 @@ function syncCollection(collectionName, stateVar) {
       state[stateVar].sort((a, b) => new Date(b.ts) - new Date(a.ts));
     }
     renderAll();
-  }, error => {
-    console.error("Erreur Firebase: ", error);
-  });
+  }, error => { console.error("Erreur Firebase: ", error); });
 }
 
-// Lancement de la synchronisation après connexion anonyme réussie
 function initApp() {
   syncCollection('temps', 'temps');
   syncCollection('samples', 'samples');
@@ -474,18 +564,6 @@ function initApp() {
   syncCollection('pharma', 'pharma');
   syncCollection('stockLogs', 'stockLogs');
 }
-
-// Connexion Anonyme (pour respecter la règle "request.auth != null")
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    initApp(); // L'utilisateur est connecté (anonymement), on lance la synchro
-  } else {
-    firebase.auth().signInAnonymously().catch((error) => {
-      console.error("Erreur de connexion anonyme:", error);
-      toast("⚠️ Erreur de connexion à la base de données.");
-    });
-  }
-});
 
 // ============ RENDU ============
 function renderAll() {
@@ -591,7 +669,7 @@ function saveSample() {
     .catch(e => toast('❌ Erreur: ' + e.message));
 }
 
-/* --- STOCKS (ALIMENTS & COUCHES) --- */
+/* --- STOCKS --- */
 async function saveStockItem(category) {
   const prefix = category === 'food' ? 'food' : 'diaper';
   const name = document.getElementById(prefix + 'Name').value.trim();
