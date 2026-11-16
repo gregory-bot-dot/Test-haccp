@@ -20,38 +20,55 @@
     background: var(--bg); color: var(--text); font-size: 16px; padding-bottom: 80px;
   }
   
-  /* ÉCRANS PLEIN ÉCRAN (Connexion / Choix Etablissement) */
+  /* ÉCRANS PLEIN ÉCRAN */
   #login-screen, #establishment-screen {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+    background: linear-gradient(135deg, #E8F6F9 0%, #D6EEF2 100%); 
+    z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+    overflow-y: auto;
   }
   .login-box {
-    background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(239,124,113,0.15); width: 100%; max-width: 450px; text-align: center; border: 2px solid white;
+    background: white; padding: 25px 20px; border-radius: 24px; box-shadow: 0 15px 35px rgba(239,124,113,0.15); width: 100%; max-width: 450px; text-align: center; border: 1px solid rgba(255,255,255,0.5);
   }
-  .login-box h1 { margin: 15px 0 5px; font-size: 24px; color: var(--primary); }
+  .login-box h1 { margin: 15px 0 5px; font-size: 24px; color: var(--primary-dark); }
   .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
   .login-box input { margin-bottom: 15px; border-color: #f0d3d0; }
   .login-box input:focus { border-color: var(--primary); }
   .login-box button { background: var(--primary); font-size: 16px; padding: 15px; box-shadow: 0 4px 10px rgba(239,124,113,0.3); }
   
-  .login-logo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;}
+  .login-logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 10px;}
 
-  /* CARTES ETABLISSEMENT */
-  .establishment-btn {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    background: white; color: var(--primary-dark); border: 2px solid var(--primary);
-    padding: 20px; border-radius: 16px; font-size: 20px; font-weight: 700; margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(239,124,113,0.1); width: 100%; cursor: pointer; transition: all 0.2s;
-  }
-  .establishment-btn:active { background: var(--primary); color: white; transform: scale(0.98); }
+  /* BLOCS DU JOUR (Citation & Activité) */
+  .daily-boxes { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; text-align: left; }
+  .daily-box { padding: 15px; border-radius: 12px; font-size: 14px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+  .daily-box span { display: block; font-weight: 700; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  
+  .quote-box { background: #FFFDF5; border: 1px solid #F6E8B1; border-left: 5px solid var(--primary); color: #5C4D2E; font-style: italic; }
+  .quote-box span { color: var(--primary); }
+  
+  .activity-box { background: #F0FDF4; border: 1px solid #BBF7D0; border-left: 5px solid var(--success); color: #22543D; font-weight: 500; }
+  .activity-box span { color: var(--success); }
 
-  /* MESSAGE DU JOUR */
-  .daily-quote {
-    background: var(--sand); border: 2px dashed #E6C84C; color: #8C6C1A;
-    padding: 16px; border-radius: 16px; margin-bottom: 25px; text-align: center;
-    font-style: italic; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  /* BULLES ETABLISSEMENT */
+  .establishment-title { margin-bottom: 15px; color: var(--muted); font-size: 14px; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px;}
+  .bubble-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+  
+  .bubble {
+    width: 130px; height: 130px; border-radius: 50%;
+    background: white; border: 3px solid var(--primary);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 10px 20px rgba(239, 124, 113, 0.15);
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; overflow: hidden;
   }
-  .daily-quote span { display: block; font-style: normal; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #B7791F; text-transform: uppercase; letter-spacing: 1px;}
+  .bubble::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--primary); opacity: 0; transition: opacity 0.2s; z-index: 1;
+  }
+  .bubble:active { transform: scale(0.92); box-shadow: 0 5px 10px rgba(239, 124, 113, 0.2); }
+  .bubble:active::before { opacity: 0.1; }
+  .bubble .icon { font-size: 40px; margin-bottom: 5px; z-index: 2; }
+  .bubble .name { font-weight: 800; color: var(--primary-dark); font-size: 14px; text-align: center; z-index: 2; line-height: 1.1; padding: 0 10px;}
 
   /* APPLICATION */
   #app-content { display: none; }
@@ -141,7 +158,6 @@
   #exportReminder { display: none; background: var(--sand); border: 2px solid #E6C84C; color: #8C6C1A; padding: 12px; border-radius: 12px; margin-bottom: 16px; text-align: center; font-weight: 600; font-size: 14px; cursor: pointer; animation: pulse 2s infinite; }
   @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-  /* BLOC ADMIN COMPACT */
   .admin-compact { display: flex; gap: 8px; margin-top: 10px; }
   .admin-compact button { margin-top: 0; padding: 10px; font-size: 13px; }
 
@@ -183,22 +199,33 @@
 <!-- ÉCRAN DE SÉLECTION D'ÉTABLISSEMENT -->
 <div id="establishment-screen" style="display:none;">
   <div class="login-box">
-    <img src="logo.jpg" alt="Logo P'tites Mouettes" class="login-logo" style="width: 100px; height: 100px;">
+    <img src="logo.jpg" alt="Logo P'tites Mouettes" class="login-logo" style="width: 90px; height: 90px; margin-bottom: 15px;">
     
-    <!-- MESSAGE DU JOUR -->
-    <div class="daily-quote">
-      <span>✨ Le rituel du jour ✨</span>
-      <div id="daily-message-content">Chargement...</div>
+    <!-- BLOCS DU JOUR -->
+    <div class="daily-boxes">
+      <div class="daily-box quote-box">
+        <span>✨ La citation du jour ✨</span>
+        <div id="daily-quote-content">Chargement...</div>
+      </div>
+      <div class="daily-box activity-box">
+        <span>🎨 L'activité du jour 🎨</span>
+        <div id="daily-activity-content">Chargement...</div>
+      </div>
     </div>
 
-    <h2 style="margin-bottom: 20px; color: var(--text); font-size: 18px;">Où êtes-vous aujourd'hui ?</h2>
+    <div class="establishment-title">Où êtes-vous aujourd'hui ?</div>
     
-    <button class="establishment-btn" onclick="selectEstablishment('Douarnenez')">
-      🌊 Douarnenez
-    </button>
-    <button class="establishment-btn" onclick="selectEstablishment('Concarneau')">
-      ⛵ Concarneau
-    </button>
+    <div class="bubble-container">
+      <div class="bubble" onclick="selectEstablishment('Douarnenez')">
+        <div class="icon">🌊</div>
+        <div class="name">Douarnenez</div>
+      </div>
+      
+      <div class="bubble" onclick="selectEstablishment('Concarneau')">
+        <div class="icon">⛵</div>
+        <div class="name">Concarneau</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -251,7 +278,6 @@
       </div>
     </div>
 
-    <!-- BLOC ADMIN COMPACT -->
     <div class="card">
       <h2>📤 Admin & Sauvegarde</h2>
       <div class="admin-compact">
@@ -464,38 +490,43 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// ============ MESSAGES DU JOUR (CITATIONS & ACTIVITÉS) ============
-const DAILY_MESSAGES = [
+// ============ CITATIONS & ACTIVITÉS DU JOUR ============
+const DAILY_QUOTES = [
   "L'enfance est un voyage dont on ne revient jamais tout à fait.",
-  "Activité du jour : Atelier transvasement avec des grosses perles.",
   "Le jeu est le travail de l'enfant. - Maria Montessori",
   "Chaque enfant est un artiste. - Pablo Picasso",
-  "Activité : Peinture avec les mains (prévoir une bonne blouse !).",
   "Un enfant qui lit sera un adulte qui pense. - A. de Saint-Exupéry",
-  "Activité : Écouter les bruits de la nature dehors.",
   "La meilleure façon de rendre les enfants bons, c'est de les rendre heureux.",
-  "Activité : Pâte à modeler maison avec de la farine et de l'eau.",
   "Il faut tout un village pour élever un enfant. - Proverbe africain",
-  "Activité : Motricité libre avec des coussins et des tunnels.",
   "Les enfants sont des rayons de soleil qui illuminent nos journées.",
-  "Activité : Lecture d'un album sur les émotions.",
   "Le plus grand cadeau que l'on puisse faire à un enfant, c'est du temps.",
-  "Activité : Jeu de construction avec des grosses briques.",
-  "Les mains dans la peinture, c'est bon pour la motricité !",
-  "Activité : Comptines et rondes avec les mains.",
   "Un enfant qui s'amuse est un enfant qui apprend.",
-  "Activité : Atelier cuisine (préparer la collation ensemble).",
   "L'éducation est l'arme la plus puissante pour changer le monde.",
-  "Activité : Jeu symbolique (dînette, poupées).",
   "Chaque enfant est unique et merveilleux à sa façon.",
-  "Activité : Éveil musical avec des maracas maison.",
   "La curiosité est le moteur de l'apprentissage.",
-  "Activité : Sortie au parc pour observer les oiseaux.",
   "Les enfants ont besoin de racines et d'ailes.",
-  "Activité : Jeu de tri de couleurs avec des objets du quotidien.",
-  "Il n'y a pas de mauvaise météo, que des mauvais vêtements !",
-  "Activité : Atelier dessin avec des craies grasses.",
   "Sourire à un enfant, c'est lui offrir sa première leçon de bonheur."
+];
+
+const DAILY_ACTIVITIES = [
+  "Atelier transvasement avec des grosses perles.",
+  "Peinture avec les mains (prévoir une bonne blouse !).",
+  "Écouter les bruits de la nature dehors.",
+  "Pâte à modeler maison avec de la farine et de l'eau.",
+  "Motricité libre avec des coussins et des tunnels.",
+  "Lecture d'un album sur les émotions.",
+  "Jeu de construction avec des grosses briques.",
+  "Comptines et rondes avec les mains.",
+  "Atelier cuisine (préparer la collation ensemble).",
+  "Jeu symbolique (dînette, poupées).",
+  "Éveil musical avec des maracas maison.",
+  "Sortie au parc pour observer les oiseaux.",
+  "Jeu de tri de couleurs avec des objets du quotidien.",
+  "Atelier dessin avec des craies grasses.",
+  "Jeux d'eau (transvasement, bateaux).",
+  "Parcours de motricité (sauter, ramper).",
+  "Cacher des objets dans la pâte à sel.",
+  "Lecture d'un livre à toucher."
 ];
 
 let state = {
@@ -533,17 +564,21 @@ function compressImage(file) {
   });
 }
 
-// ============ GESTION DU MESSAGE DU JOUR ============
-function loadDailyMessage() {
-  // Utilise le jour de l'année pour choisir un message (change tous les jours)
+// ============ GESTION DU CONTENU DU JOUR ============
+function loadDailyContent() {
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 0);
   const diff = now - start;
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
   
-  const msgIndex = dayOfYear % DAILY_MESSAGES.length;
-  document.getElementById('daily-message-content').textContent = DAILY_MESSAGES[msgIndex];
+  // Citation
+  const quoteIndex = dayOfYear % DAILY_QUOTES.length;
+  document.getElementById('daily-quote-content').textContent = DAILY_QUOTES[quoteIndex];
+  
+  // Activité (Décalage pour ne pas avoir la même paire tous les jours)
+  const activityIndex = (dayOfYear + 7) % DAILY_ACTIVITIES.length;
+  document.getElementById('daily-activity-content').textContent = DAILY_ACTIVITIES[activityIndex];
 }
 
 // ============ AUTHENTIFICATION ============
@@ -581,7 +616,7 @@ auth.onAuthStateChanged((user) => {
 
 // ============ LOGIQUE ETABLISSEMENT ============
 function checkEstablishment() {
-  loadDailyMessage();
+  loadDailyContent();
   const saved = localStorage.getItem('creche_establishment');
   
   if (saved) {
@@ -610,7 +645,7 @@ function selectEstablishment(name) {
 function changeEstablishment() {
   if(confirm("Voulez-vous changer d'établissement ?")) {
     localStorage.removeItem('creche_establishment');
-    window.location.reload(); // Recharge l'app pour revenir à l'écran de choix
+    window.location.reload();
   }
 }
 
@@ -666,7 +701,6 @@ function syncCollection(collectionName, stateVar) {
 }
 
 function initApp() {
-  // On vide les données locales avant de recharger celles du bon établissement
   state.temps = []; state.samples = []; state.cleans = []; state.foods = []; state.diapers = []; state.pharma = []; state.stockLogs = [];
   
   syncCollection('temps', 'temps');
