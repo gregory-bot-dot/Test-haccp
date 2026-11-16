@@ -130,7 +130,6 @@
   }
   .toast.show { opacity: 1; transform: translateY(-10px); }
 
-  /* --- STYLES POUR L'EXPORT PDF (IMPRESSION) --- */
   #print-report { display: none; }
   @media print {
     body { background: white; padding: 0; font-size: 12px; }
@@ -147,6 +146,9 @@
     .report-table .danger-text { color: red; font-weight: bold; }
   }
 </style>
+<!-- FIREBASE SDK (Version compatibilité) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -243,11 +245,8 @@
 <!-- Vue ALIMENTS -->
 <div class="view" id="view-aliments">
   <div class="card">
-    <!-- 1. ETAT DES STOCKS EN HAUT -->
     <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Repas)</h2>
     <div id="foodList" style="margin-bottom: 24px;"></div>
-
-    <!-- 2. FORMULAIRE EN BAS -->
     <h2>🥕 Mouvement de Stock</h2>
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
       <label style="margin-top:0;">Nom du produit</label>
@@ -265,11 +264,8 @@
       <label>Opérateur</label><input type="text" id="foodOperator" placeholder="Votre prénom" style="background: white;">
       <label>📸 Photo (bon de livraison...)</label>
       <input type="file" id="foodPhoto" accept="image/*" capture="environment" style="background: white;">
-      
       <button onclick="saveStockItem('food')" style="margin-top: 20px; background: #38a169;">💾 Valider</button>
     </div>
-
-    <!-- 3. HISTORIQUE TOUT EN BAS -->
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="foodHistory"></div>
   </div>
@@ -278,11 +274,8 @@
 <!-- Vue COUCHES -->
 <div class="view" id="view-couches">
   <div class="card">
-    <!-- 1. ETAT DES STOCKS EN HAUT -->
     <h2 style="font-size: 16px; margin-bottom: 16px;">📋 État des stocks (Couches)</h2>
     <div id="diaperList" style="margin-bottom: 24px;"></div>
-
-    <!-- 2. FORMULAIRE EN BAS -->
     <h2>🧷 Mouvement de Stock</h2>
     <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
       <label style="margin-top:0;">Nom du produit</label>
@@ -300,17 +293,14 @@
       <label>Opérateur</label><input type="text" id="diaperOperator" placeholder="Votre prénom" style="background: white;">
       <label>📸 Photo (bon de livraison...)</label>
       <input type="file" id="diaperPhoto" accept="image/*" capture="environment" style="background: white;">
-
       <button onclick="saveStockItem('diaper')" style="margin-top: 20px; background: #d53f8c;">💾 Valider</button>
     </div>
-
-    <!-- 3. HISTORIQUE TOUT EN BAS -->
     <h2 style="font-size: 15px; margin: 24px 0 16px; color: var(--muted);">📜 Derniers mouvements</h2>
     <div id="diaperHistory"></div>
   </div>
 </div>
 
-<!-- Vue SOINS & ADMIN (Pharmacie, Nettoyage, PDF) -->
+<!-- Vue SOINS & ADMIN -->
 <div class="view" id="view-soins">
   <div class="tabs">
     <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
@@ -378,6 +368,20 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ============ INITIALISATION FIREBASE ============
+const firebaseConfig = {
+  apiKey: "AIzaSyAzG_CSNrvUBZfV6jeNbV7elwESbIuZq3Y",
+  authDomain: "testcreche-d6962.firebaseapp.com",
+  projectId: "testcreche-d6962",
+  storageBucket: "testcreche-d6962.firebasestorage.app",
+  messagingSenderId: "799336752587",
+  appId: "1:799336752587:web:1980495916254dc371024e",
+  measurementId: "G-JPG5D4G5T5"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 // ============ DONNÉES ============
 const DEFAULT_EQUIPMENT = [
   { name: "Frigo cuisine", type: "frigo", min: 0, max: 4 },
@@ -386,17 +390,12 @@ const DEFAULT_EQUIPMENT = [
   { name: "Frigo plats témoins", type: "frigo", min: 0, max: 3 }
 ];
 
-function load(key, def) { try { return JSON.parse(localStorage.getItem('creche_' + key)) || def; } catch { return def; } }
-function save(key, val) { try { localStorage.setItem('creche_' + key, JSON.stringify(val)); } catch (e) { toast("⚠️ Mémoire pleine !"); } }
-
 let state = {
-  temps: load('temps', []), samples: load('samples', []), cleans: load('cleans', []),
-  foods: load('foods', []), diapers: load('diapers', []), pharma: load('pharma', []),
-  equipment: load('equipment', DEFAULT_EQUIPMENT), stockLogs: load('stockLogs', [])
+  temps: [], samples: [], cleans: [], foods: [], diapers: [], pharma: [], stockLogs: [],
+  equipment: DEFAULT_EQUIPMENT
 };
 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function fmtDate(iso) { const d = new Date(iso); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
 function startOfToday() { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
@@ -425,7 +424,6 @@ function showView(name) {
   document.getElementById('view-' + name).classList.add('active');
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
-  
   const titles = {
     dashboard: ['🏡 Espace Crèche', 'Tableau de bord'],
     haccp: ['🌡️ HACCP', 'Sécurité alimentaire'],
@@ -435,22 +433,45 @@ function showView(name) {
   };
   document.getElementById('headerTitle').textContent = titles[name][0];
   document.getElementById('headerSub').textContent = titles[name][1];
-  renderAll();
 }
-
 function switchHaccpTab(tabId) {
   document.querySelectorAll('.haccp-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
   document.querySelectorAll('#view-haccp .tabs button').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
 }
-
 function switchSoinsTab(tabId) {
   document.querySelectorAll('.soins-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
   document.querySelectorAll('#view-soins .tabs button').forEach(b => b.classList.remove('active'));
   event.target.classList.add('active');
 }
+
+// ============ SYNCHRONISATION FIREBASE (TEMPS RÉEL) ============
+function syncCollection(collectionName, stateVar) {
+  db.collection(collectionName).onSnapshot(snapshot => {
+    state[stateVar] = [];
+    snapshot.forEach(doc => {
+      state[stateVar].push({ id: doc.id, ...doc.data() });
+    });
+    // Trier par date
+    if (stateVar !== 'foods' && stateVar !== 'diapers' && stateVar !== 'pharma') {
+      state[stateVar].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    }
+    renderAll();
+  }, error => {
+    console.error("Erreur Firebase: ", error);
+  });
+}
+
+// Lancer la synchro
+syncCollection('temps', 'temps');
+syncCollection('samples', 'samples');
+syncCollection('cleans', 'cleans');
+syncCollection('foods', 'foods');
+syncCollection('diapers', 'diapers');
+syncCollection('pharma', 'pharma');
+syncCollection('stockLogs', 'stockLogs');
 
 // ============ RENDU ============
 function renderAll() {
@@ -460,14 +481,10 @@ function renderAll() {
 function renderDashboard() {
   const today = startOfToday();
   const tempsToday = state.temps.filter(t => new Date(t.ts).getTime() >= today).length;
-  
-  let alerts = [];
-  let alertFoodCount = 0;
-  let alertPharmaCount = 0;
+  let alerts = []; let alertFoodCount = 0; let alertPharmaCount = 0;
   
   state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name}`); alertFoodCount++; } });
   state.diapers.forEach(s => { if (s.qty <= s.min) { alerts.push(`🧷 Stock bas : ${s.name}`); } });
-  
   state.pharma.forEach(p => {
     if (p.exp) {
       const daysLeft = Math.floor((new Date(p.exp).getTime() - today) / (1000*60*60*24));
@@ -476,7 +493,6 @@ function renderDashboard() {
     }
     if (p.qty <= 1) { alerts.push(`💊 Stock bas : ${p.name}`); alertPharmaCount++; }
   });
-  
   const now = Date.now(); const h = 3600 * 1000;
   state.temps.forEach(t => { if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange) alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`); });
   state.samples.forEach(s => { if (now - new Date(s.ts).getTime() > 5*24*h) alerts.push(`🍽️ Plat témoin "${s.dish}" : à retirer`); });
@@ -491,166 +507,10 @@ function renderDashboard() {
   else list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
 }
 
-/* --- DATALISTS --- */
 function updateDatalists() {
   document.getElementById('foodDatalist').innerHTML = state.foods.map(f => `<option value="${f.name}">`).join('');
   document.getElementById('diaperDatalist').innerHTML = state.diapers.map(d => `<option value="${d.name}">`).join('');
   document.getElementById('pharmaDatalist').innerHTML = state.pharma.map(p => `<option value="${p.name}">`).join('');
-}
-
-/* --- STOCKS (ALIMENTS & COUCHES) --- */
-async function saveStockItem(category) {
-  const prefix = category === 'food' ? 'food' : 'diaper';
-  const name = document.getElementById(prefix + 'Name').value.trim();
-  const qty = parseInt(document.getElementById(prefix + 'Qty').value);
-  const min = parseInt(document.getElementById(prefix + 'Min').value);
-  let action = 'add'; if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
-  const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
-  const photoInput = document.getElementById(prefix + 'Photo');
-
-  if (!name) return toast('⚠️ Nom du produit ?');
-  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
-  
-  let photoBase64 = null;
-  if (photoInput.files && photoInput.files[0]) {
-    toast('📸 Traitement photo...');
-    photoBase64 = await compressImage(photoInput.files[0]);
-  }
-
-  let list = category === 'food' ? state.foods : state.diapers;
-  let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
-  let logMessage = ""; let logType = "in";
-
-  if (existingItem) {
-    if (action === 'set') { logMessage = `${operator} a mis à jour l'inventaire de ${name} (Nouveau: ${qty})`; logType = "set"; existingItem.qty = qty; }
-    else { logMessage = `${operator} a ajouté ${qty} ${name}`; logType = "in"; existingItem.qty += qty; }
-    if (!isNaN(min) && document.getElementById(prefix + 'Min').value !== '') existingItem.min = min;
-  } else {
-    const finalMin = isNaN(min) ? 3 : min;
-    list.push({ id: uid(), name, qty, min: finalMin });
-    logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
-  }
-
-  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 });
-  if (state.stockLogs.length > 50) state.stockLogs.pop();
-
-  save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
-  toast(`✅ Mouvement enregistré !`);
-  
-  document.getElementById(prefix + 'Name').value = '';
-  document.getElementById(prefix + 'Qty').value = '';
-  document.getElementById(prefix + 'Min').value = '';
-  document.getElementById(prefix + 'Operator').value = '';
-  document.getElementById(prefix + 'Photo').value = '';
-  document.getElementById(prefix + 'ActAdd').checked = true;
-  
-  renderAll();
-}
-
-function renderStocks() {
-  const renderList = (list, cat) => {
-    if (list.length === 0) return '<div class="empty">Aucun produit en stock</div>';
-    return list.map(s => {
-      const isLow = s.qty <= s.min;
-      return `<div class="stock-card ${isLow ? 'alert' : ''}">
-        <div class="stock-info"><div class="stock-name">${s.name}</div><div class="stock-qty-text">Seuil alerte : ${s.min}</div></div>
-        <div class="stock-controls"><button onclick="updateStockQty('${cat}', '${s.id}', -1)">-</button><span class="qty-display">${s.qty}</span><button onclick="updateStockQty('${cat}', '${s.id}', 1)">+</button></div>
-      </div>`;
-    }).join('');
-  };
-  document.getElementById('foodList').innerHTML = renderList(state.foods, 'food');
-  document.getElementById('diaperList').innerHTML = renderList(state.diapers, 'diaper');
-
-  const renderLogs = (cat) => {
-    const logs = state.stockLogs.filter(l => l.category === cat);
-    if(logs.length === 0) return '<div class="empty">Aucun mouvement</div>';
-    return logs.map(l => {
-      const photoHtml = l.photo ? `<br><img src="${l.photo}" class="photo-thumb" onclick="window.open('${l.photo}', '_blank')">` : '';
-      return `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message} ${photoHtml}</div>`;
-    }).join('');
-  };
-  document.getElementById('foodHistory').innerHTML = renderLogs('food');
-  document.getElementById('diaperHistory').innerHTML = renderLogs('diaper');
-}
-
-function updateStockQty(category, id, delta) {
-  let list = category === 'food' ? state.foods : state.diapers;
-  const item = list.find(s => s.id === id);
-  if (item) {
-    item.qty += delta; if (item.qty < 0) item.qty = 0;
-    state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
-    if (state.stockLogs.length > 50) state.stockLogs.pop();
-    save(category === 'food' ? 'foods' : 'diapers', list); save('stockLogs', state.stockLogs);
-    renderAll();
-  }
-}
-
-/* --- PHARMACIE --- */
-function savePharmaItem() {
-  const name = document.getElementById('pharmaName').value.trim();
-  const qty = parseInt(document.getElementById('pharmaQty').value);
-  const exp = document.getElementById('pharmaExp').value;
-  const operator = document.getElementById('pharmaOperator').value.trim() || 'Inconnu';
-
-  if (!name) return toast('⚠️ Nom du produit ?');
-  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
-  
-  let existingItem = state.pharma.find(i => i.name.toLowerCase() === name.toLowerCase());
-  if (existingItem) {
-    existingItem.qty = qty;
-    if (exp) existingItem.exp = exp;
-  } else {
-    state.pharma.push({ id: uid(), name, qty, exp });
-  }
-  
-  state.stockLogs.unshift({ id: uid(), ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null });
-  save('pharma', state.pharma); save('stockLogs', state.stockLogs);
-  toast(`✅ Pharmacie mise à jour !`);
-  
-  document.getElementById('pharmaName').value = '';
-  document.getElementById('pharmaQty').value = '';
-  document.getElementById('pharmaExp').value = '';
-  document.getElementById('pharmaOperator').value = '';
-  renderAll();
-}
-
-function renderPharma() {
-  const list = document.getElementById('pharmaList');
-  if (state.pharma.length === 0) { list.innerHTML = '<div class="empty">Aucun produit pharmaceutique</div>'; return; }
-  const today = new Date().setHours(0,0,0,0);
-  
-  list.innerHTML = state.pharma.map(p => {
-    let isAlert = false;
-    let expBadge = '';
-    
-    if (p.exp) {
-      const expDate = new Date(p.exp).getTime();
-      const daysLeft = Math.floor((expDate - today) / (1000*60*60*24));
-      if (daysLeft < 0) { isAlert = true; expBadge = `<span class="alert-badge badge-danger">PÉRIMÉ</span>`; }
-      else if (daysLeft <= 30) { isAlert = true; expBadge = `<span class="alert-badge badge-warn">Expire dans ${daysLeft}j</span>`; }
-      else { expBadge = `<span class="alert-badge badge-ok">Exp: ${new Date(p.exp).toLocaleDateString('fr-FR')}</span>`; }
-    }
-    if (p.qty <= 1) isAlert = true;
-
-    return `<div class="stock-card ${isAlert ? 'alert' : ''}">
-      <div class="stock-info">
-        <div class="stock-name">${p.name} ${expBadge}</div>
-      </div>
-      <div class="stock-controls">
-        <button onclick="updatePharmaQty('${p.id}', -1)">-</button>
-        <span class="qty-display">${p.qty}</span>
-        <button onclick="updatePharmaQty('${p.id}', 1)">+</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function updatePharmaQty(id, delta) {
-  const item = state.pharma.find(p => p.id === id);
-  if (item) {
-    item.qty += delta; if (item.qty < 0) item.qty = 0;
-    save('pharma', state.pharma); renderAll();
-  }
 }
 
 /* --- TEMPÉRATURES --- */
@@ -662,10 +522,10 @@ function renderTemp() {
   if (tempFilter === 'week') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfWeek());
   const list = document.getElementById('tempList');
   if (filtered.length === 0) { list.innerHTML = '<div class="empty">Aucun contrôle</div>'; return; }
-  list.innerHTML = filtered.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(t => {
+  list.innerHTML = filtered.map(t => {
     const badge = t.outOfRange ? `<span class="alert-badge badge-danger">HORS NORME</span>` : `<span class="alert-badge badge-ok">OK</span>`;
     const photoHtml = t.photo ? `<img src="${t.photo}" class="photo-thumb" onclick="window.open('${t.photo}', '_blank')">` : '';
-    return `<div class="list-item"><div class="info"><div class="title">${t.label} — ${t.value}°C ${badge}</div><div class="detail">${fmtDate(t.ts)} • ${t.operator}</div></div>${photoHtml}<button class="small danger" onclick="deleteTemp('${t.id}')">✕</button></div>`;
+    return `<div class="list-item"><div class="info"><div class="title">${t.label} — ${t.value}°C ${badge}</div><div class="detail">${fmtDate(t.ts)} • ${t.operator}</div></div>${photoHtml}<button class="small danger" onclick="deleteDoc('temps', '${t.id}')">✕</button></div>`;
   }).join('');
 }
 function updateTempFields() {
@@ -692,55 +552,200 @@ async function saveTemp() {
   else if (type === 'reheat') { label = `Remise chauffe : ${document.getElementById('tempDish').value||'?'}`; outOfRange = value < 63; }
   let photoBase64 = null; const pInput = document.getElementById('tempPhoto');
   if (pInput.files && pInput.files[0]) { toast('📸 Traitement...'); photoBase64 = await compressImage(pInput.files[0]); }
-  state.temps.push({ id: uid(), ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 });
-  save('temps', state.temps); toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); closeTempForm(); renderAll();
+  
+  db.collection('temps').add({ ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 })
+    .then(() => { toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); closeTempForm(); })
+    .catch(e => toast('❌ Erreur: ' + e.message));
 }
-function deleteTemp(id) { if (confirm('Supprimer ?')) { state.temps = state.temps.filter(t => t.id !== id); save('temps', state.temps); renderAll(); } }
 
 /* --- PLATS TÉMOINS --- */
 function renderSamples() {
   const list = document.getElementById('sampleList'); if (state.samples.length === 0) { list.innerHTML = '<div class="empty">Aucun plat</div>'; return; }
   const now = Date.now();
-  list.innerHTML = state.samples.sort((a,b) => new Date(b.ts) - new Date(a.ts)).map(s => {
+  list.innerHTML = state.samples.map(s => {
     const days = Math.floor((now - new Date(s.ts).getTime()) / (24*3600*1000));
     const badge = days > 5 ? '<span class="alert-badge badge-danger">À RETIRER</span>' : `<span class="alert-badge badge-ok">J+${days}</span>`;
-    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g</div></div><button class="small danger" onclick="deleteSample('${s.id}')">✕</button></div>`;
+    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g</div></div><button class="small danger" onclick="deleteDoc('samples', '${s.id}')">✕</button></div>`;
   }).join('');
 }
 function openSampleForm() { document.getElementById('sampleFormCard').style.display = 'block'; document.getElementById('sampleDate').value = todayStr(); document.getElementById('sampleDish').value = ''; document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'}); }
 function closeSampleForm() { document.getElementById('sampleFormCard').style.display = 'none'; }
 function saveSample() {
   if (!document.getElementById('sampleDish').value.trim()) return toast('⚠️ Nom du plat ?');
-  state.samples.push({ id: uid(), ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 });
-  save('samples', state.samples); toast('✅ Enregistré'); closeSampleForm(); renderAll();
+  db.collection('samples').add({ ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 })
+    .then(() => { toast('✅ Enregistré'); closeSampleForm(); })
+    .catch(e => toast('❌ Erreur: ' + e.message));
 }
-function deleteSample(id) { if (confirm('Supprimer ?')) { state.samples = state.samples.filter(s => s.id !== id); save('samples', state.samples); renderAll(); } }
+
+/* --- STOCKS (ALIMENTS & COUCHES) --- */
+async function saveStockItem(category) {
+  const prefix = category === 'food' ? 'food' : 'diaper';
+  const name = document.getElementById(prefix + 'Name').value.trim();
+  const qty = parseInt(document.getElementById(prefix + 'Qty').value);
+  const min = parseInt(document.getElementById(prefix + 'Min').value);
+  let action = 'add'; if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
+  const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
+  const photoInput = document.getElementById(prefix + 'Photo');
+
+  if (!name) return toast('⚠️ Nom du produit ?');
+  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
+  
+  let photoBase64 = null;
+  if (photoInput.files && photoInput.files[0]) { toast('📸 Traitement photo...'); photoBase64 = await compressImage(photoInput.files[0]); }
+
+  let list = category === 'food' ? state.foods : state.diapers;
+  let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
+  let logMessage = ""; let logType = "in";
+  const collectionName = category === 'food' ? 'foods' : 'diapers';
+
+  if (existingItem) {
+    let newQty = action === 'set' ? qty : existingItem.qty + qty;
+    let updateData = { qty: newQty };
+    if (!isNaN(min) && document.getElementById(prefix + 'Min').value !== '') updateData.min = min;
+    
+    db.collection(collectionName).doc(existingItem.id).update(updateData);
+    logMessage = action === 'set' ? `${operator} a mis à jour l'inventaire de ${name} (Nouveau: ${qty})` : `${operator} a ajouté ${qty} ${name}`;
+    logType = action === 'set' ? "set" : "in";
+  } else {
+    const finalMin = isNaN(min) ? 3 : min;
+    db.collection(collectionName).add({ name, qty, min: finalMin });
+    logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
+  }
+
+  db.collection('stockLogs').add({ ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 })
+    .then(() => {
+      toast(`✅ Mouvement enregistré !`);
+      document.getElementById(prefix + 'Name').value = '';
+      document.getElementById(prefix + 'Qty').value = '';
+      document.getElementById(prefix + 'Min').value = '';
+      document.getElementById(prefix + 'Operator').value = '';
+      document.getElementById(prefix + 'Photo').value = '';
+      document.getElementById(prefix + 'ActAdd').checked = true;
+    });
+}
+
+function renderStocks() {
+  const renderList = (list, cat) => {
+    if (list.length === 0) return '<div class="empty">Aucun produit en stock</div>';
+    return list.map(s => {
+      const isLow = s.qty <= s.min;
+      return `<div class="stock-card ${isLow ? 'alert' : ''}">
+        <div class="stock-info"><div class="stock-name">${s.name}</div><div class="stock-qty-text">Seuil alerte : ${s.min}</div></div>
+        <div class="stock-controls"><button onclick="updateStockQty('${cat}', '${s.id}', -1)">-</button><span class="qty-display">${s.qty}</span><button onclick="updateStockQty('${cat}', '${s.id}', 1)">+</button></div>
+      </div>`;
+    }).join('');
+  };
+  document.getElementById('foodList').innerHTML = renderList(state.foods, 'food');
+  document.getElementById('diaperList').innerHTML = renderList(state.diapers, 'diaper');
+
+  const renderLogs = (cat) => {
+    const logs = state.stockLogs.filter(l => l.category === cat);
+    if(logs.length === 0) return '<div class="empty">Aucun mouvement</div>';
+    return logs.slice(0, 20).map(l => {
+      const photoHtml = l.photo ? `<br><img src="${l.photo}" class="photo-thumb" onclick="window.open('${l.photo}', '_blank')">` : '';
+      return `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message} ${photoHtml}</div>`;
+    }).join('');
+  };
+  document.getElementById('foodHistory').innerHTML = renderLogs('food');
+  document.getElementById('diaperHistory').innerHTML = renderLogs('diaper');
+}
+
+function updateStockQty(category, id, delta) {
+  let list = category === 'food' ? state.foods : state.diapers;
+  const item = list.find(s => s.id === id);
+  if (item) {
+    let newQty = Math.max(0, item.qty + delta);
+    const collectionName = category === 'food' ? 'foods' : 'diapers';
+    db.collection(collectionName).doc(id).update({ qty: newQty });
+    db.collection('stockLogs').add({ ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
+  }
+}
+
+/* --- PHARMACIE --- */
+function savePharmaItem() {
+  const name = document.getElementById('pharmaName').value.trim();
+  const qty = parseInt(document.getElementById('pharmaQty').value);
+  const exp = document.getElementById('pharmaExp').value;
+  const operator = document.getElementById('pharmaOperator').value.trim() || 'Inconnu';
+
+  if (!name) return toast('⚠️ Nom du produit ?');
+  if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
+  
+  let existingItem = state.pharma.find(i => i.name.toLowerCase() === name.toLowerCase());
+  if (existingItem) {
+    let updateData = { qty: qty };
+    if (exp) updateData.exp = exp;
+    db.collection('pharma').doc(existingItem.id).update(updateData);
+  } else {
+    db.collection('pharma').add({ name, qty, exp });
+  }
+  
+  db.collection('stockLogs').add({ ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null })
+    .then(() => {
+      toast(`✅ Pharmacie mise à jour !`);
+      document.getElementById('pharmaName').value = '';
+      document.getElementById('pharmaQty').value = '';
+      document.getElementById('pharmaExp').value = '';
+      document.getElementById('pharmaOperator').value = '';
+    });
+}
+
+function renderPharma() {
+  const list = document.getElementById('pharmaList');
+  if (state.pharma.length === 0) { list.innerHTML = '<div class="empty">Aucun produit pharmaceutique</div>'; return; }
+  const today = new Date().setHours(0,0,0,0);
+  list.innerHTML = state.pharma.map(p => {
+    let isAlert = false; let expBadge = '';
+    if (p.exp) {
+      const expDate = new Date(p.exp).getTime();
+      const daysLeft = Math.floor((expDate - today) / (1000*60*60*24));
+      if (daysLeft < 0) { isAlert = true; expBadge = `<span class="alert-badge badge-danger">PÉRIMÉ</span>`; }
+      else if (daysLeft <= 30) { isAlert = true; expBadge = `<span class="alert-badge badge-warn">Expire dans ${daysLeft}j</span>`; }
+      else { expBadge = `<span class="alert-badge badge-ok">Exp: ${new Date(p.exp).toLocaleDateString('fr-FR')}</span>`; }
+    }
+    if (p.qty <= 1) isAlert = true;
+    return `<div class="stock-card ${isAlert ? 'alert' : ''}">
+      <div class="stock-info"><div class="stock-name">${p.name} ${expBadge}</div></div>
+      <div class="stock-controls"><button onclick="updatePharmaQty('${p.id}', -1)">-</button><span class="qty-display">${p.qty}</span><button onclick="updatePharmaQty('${p.id}', 1)">+</button></div>
+    </div>`;
+  }).join('');
+}
+
+function updatePharmaQty(id, delta) {
+  const item = state.pharma.find(p => p.id === id);
+  if (item) {
+    let newQty = Math.max(0, item.qty + delta);
+    db.collection('pharma').doc(id).update({ qty: newQty });
+  }
+}
 
 /* --- NETTOYAGE --- */
 function renderCleans() {
   const list = document.getElementById('cleanList'); if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
-  list.innerHTML = state.cleans.sort((a,b) => new Date(b.ts) - new Date(a.ts)).slice(0, 20).map(c => `<div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteClean('${c.id}')">✕</button></div>`).join('');
+  list.innerHTML = state.cleans.slice(0, 20).map(c => `<div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteDoc('cleans', '${c.id}')">✕</button></div>`).join('');
 }
 function openCleanForm() { document.getElementById('cleanFormCard').style.display = 'block'; document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'}); }
 function closeCleanForm() { document.getElementById('cleanFormCard').style.display = 'none'; }
 function saveClean() {
   if (!document.getElementById('cleanTask').value.trim() || !document.getElementById('cleanOperator').value.trim()) return toast('⚠️ Champs manquants');
-  state.cleans.push({ id: uid(), ts: new Date().toISOString(), zone: document.getElementById('cleanZone').value, task: document.getElementById('cleanTask').value.trim(), operator: document.getElementById('cleanOperator').value.trim() });
-  save('cleans', state.cleans); toast('✅ Enregistré'); closeCleanForm(); renderAll();
+  db.collection('cleans').add({ ts: new Date().toISOString(), zone: document.getElementById('cleanZone').value, task: document.getElementById('cleanTask').value.trim(), operator: document.getElementById('cleanOperator').value.trim() })
+    .then(() => { toast('✅ Enregistré'); closeCleanForm(); });
 }
-function deleteClean(id) { if (confirm('Supprimer ?')) { state.cleans = state.cleans.filter(c => c.id !== id); save('cleans', state.cleans); renderAll(); } }
+
+// SUPPRESSION GÉNÉRIQUE
+function deleteDoc(collectionName, id) {
+  if (confirm('Supprimer définitivement ?')) {
+    db.collection(collectionName).doc(id).delete()
+      .then(() => toast('🗑️ Supprimé'))
+      .catch(e => toast('❌ Erreur: ' + e.message));
+  }
+}
 
 /* --- GÉNÉRATION PDF & CSV --- */
 function generatePDF() {
   const todayStrFR = new Date().toLocaleDateString('fr-FR');
-  let html = `
-    <div class="report-header">
-      <h1>Rapport d'Activité - Micro-Crèche</h1>
-      <p>Généré le ${todayStrFR}</p>
-    </div>
-  `;
+  let html = `<div class="report-header"><h1>Rapport d'Activité - Micro-Crèche</h1><p>Généré le ${todayStrFR}</p></div>`;
 
-  // 1. Températures du jour
   const todayTemps = state.temps.filter(t => new Date(t.ts).getTime() >= startOfToday());
   html += `<div class="report-section"><h2>1. Contrôles HACCP (Aujourd'hui)</h2>`;
   if (todayTemps.length === 0) html += `<p>Aucun contrôle enregistré aujourd'hui.</p>`;
@@ -754,16 +759,12 @@ function generatePDF() {
   }
   html += `</div>`;
 
-  // 2. Stocks Aliments & Couches
-  html += `<div class="report-section"><h2>2. État des Stocks</h2>`;
-  html += `<table class="report-table"><tr><th>Catégorie</th><th>Produit</th><th>Quantité restante</th><th>Statut</th></tr>`;
+  html += `<div class="report-section"><h2>2. État des Stocks</h2><table class="report-table"><tr><th>Catégorie</th><th>Produit</th><th>Quantité restante</th><th>Statut</th></tr>`;
   state.foods.forEach(s => { html += `<tr><td>Aliment</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
   state.diapers.forEach(s => { html += `<tr><td>Couche/Hygiène</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
   html += `</table></div>`;
 
-  // 3. Pharmacie
-  html += `<div class="report-section"><h2>3. Pharmacie & Soins</h2>`;
-  html += `<table class="report-table"><tr><th>Produit</th><th>Quantité</th><th>Date de péremption</th><th>Statut</th></tr>`;
+  html += `<div class="report-section"><h2>3. Pharmacie & Soins</h2><table class="report-table"><tr><th>Produit</th><th>Quantité</th><th>Date de péremption</th><th>Statut</th></tr>`;
   state.pharma.forEach(p => {
     let status = "OK";
     if(p.exp) {
@@ -775,29 +776,23 @@ function generatePDF() {
   });
   html += `</table></div>`;
 
-  // 4. Plats témoins
-  html += `<div class="report-section"><h2>4. Plats Témoins</h2>`;
   const now = Date.now();
   const recentSamples = state.samples.filter(s => now - new Date(s.ts).getTime() < 6*24*3600*1000);
+  html += `<div class="report-section"><h2>4. Plats Témoins</h2>`;
   if(recentSamples.length === 0) html += `<p>Aucun plat témoin enregistré récemment.</p>`;
   else {
     html += `<table class="report-table"><tr><th>Date</th><th>Plat</th><th>Quantité</th></tr>`;
-    recentSamples.forEach(s => {
-      html += `<tr><td>${new Date(s.ts).toLocaleDateString('fr-FR')}</td><td>${s.dish}</td><td>${s.qty}g</td></tr>`;
-    });
+    recentSamples.forEach(s => { html += `<tr><td>${new Date(s.ts).toLocaleDateString('fr-FR')}</td><td>${s.dish}</td><td>${s.qty}g</td></tr>`; });
     html += `</table>`;
   }
   html += `</div>`;
 
-  // 5. Nettoyage du jour
   const todayCleans = state.cleans.filter(c => new Date(c.ts).getTime() >= startOfToday());
   html += `<div class="report-section"><h2>5. Nettoyage (Aujourd'hui)</h2>`;
   if (todayCleans.length === 0) html += `<p>Aucun nettoyage enregistré aujourd'hui.</p>`;
   else {
     html += `<table class="report-table"><tr><th>Heure</th><th>Zone</th><th>Tâche</th><th>Opérateur</th></tr>`;
-    todayCleans.forEach(c => {
-      html += `<tr><td>${new Date(c.ts).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</td><td>${c.zone}</td><td>${c.task}</td><td>${c.operator}</td></tr>`;
-    });
+    todayCleans.forEach(c => { html += `<tr><td>${new Date(c.ts).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'})}</td><td>${c.zone}</td><td>${c.task}</td><td>${c.operator}</td></tr>`; });
     html += `</table>`;
   }
   html += `</div>`;
