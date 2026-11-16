@@ -146,9 +146,10 @@
     .report-table .danger-text { color: red; font-weight: bold; }
   }
 </style>
-<!-- FIREBASE SDK (Version compatibilité) -->
+<!-- FIREBASE SDK (App, Firestore & Auth) -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -454,7 +455,6 @@ function syncCollection(collectionName, stateVar) {
     snapshot.forEach(doc => {
       state[stateVar].push({ id: doc.id, ...doc.data() });
     });
-    // Trier par date
     if (stateVar !== 'foods' && stateVar !== 'diapers' && stateVar !== 'pharma') {
       state[stateVar].sort((a, b) => new Date(b.ts) - new Date(a.ts));
     }
@@ -464,14 +464,28 @@ function syncCollection(collectionName, stateVar) {
   });
 }
 
-// Lancer la synchro
-syncCollection('temps', 'temps');
-syncCollection('samples', 'samples');
-syncCollection('cleans', 'cleans');
-syncCollection('foods', 'foods');
-syncCollection('diapers', 'diapers');
-syncCollection('pharma', 'pharma');
-syncCollection('stockLogs', 'stockLogs');
+// Lancement de la synchronisation après connexion anonyme réussie
+function initApp() {
+  syncCollection('temps', 'temps');
+  syncCollection('samples', 'samples');
+  syncCollection('cleans', 'cleans');
+  syncCollection('foods', 'foods');
+  syncCollection('diapers', 'diapers');
+  syncCollection('pharma', 'pharma');
+  syncCollection('stockLogs', 'stockLogs');
+}
+
+// Connexion Anonyme (pour respecter la règle "request.auth != null")
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    initApp(); // L'utilisateur est connecté (anonymement), on lance la synchro
+  } else {
+    firebase.auth().signInAnonymously().catch((error) => {
+      console.error("Erreur de connexion anonyme:", error);
+      toast("⚠️ Erreur de connexion à la base de données.");
+    });
+  }
+});
 
 // ============ RENDU ============
 function renderAll() {
