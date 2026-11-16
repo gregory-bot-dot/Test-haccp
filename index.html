@@ -77,7 +77,7 @@
   .card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);}
   .card .meta { font-size: 13px; color: var(--muted); }
 
-  /* BLOCS DU JOUR (Sur l'accueil) */
+  /* BLOCS DU JOUR */
   .daily-box { padding: 15px; border-radius: 12px; font-size: 14px; position: relative; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
   .daily-box:last-child { margin-bottom: 0; }
   .daily-box span { display: block; font-weight: 700; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
@@ -155,9 +155,6 @@
   .toast { position: fixed; bottom: 90px; left: 16px; right: 16px; background: var(--text); color: white; padding: 14px 16px; border-radius: 12px; font-size: 14px; text-align: center; font-weight: 500; z-index: 20000; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   .toast.show { opacity: 1; transform: translateY(-10px); }
 
-  #exportReminder { display: none; background: var(--sand); border: 2px solid #E6C84C; color: #8C6C1A; padding: 12px; border-radius: 12px; margin-bottom: 16px; text-align: center; font-weight: 600; font-size: 14px; cursor: pointer; animation: pulse 2s infinite; }
-  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
   .admin-compact { display: flex; gap: 8px; margin-top: 10px; }
   .admin-compact button { margin-top: 0; padding: 10px; font-size: 13px; }
 
@@ -232,11 +229,7 @@
   <!-- Vue Tableau de bord -->
   <div class="view active" id="view-dashboard">
     
-    <div id="exportReminder" onclick="showView('admin');">
-      📅 C'est l'heure de la sauvegarde ! <br><span style="font-weight:400; font-size:12px;">Cliquez ici pour faire votre export hebdomadaire.</span>
-    </div>
-
-    <!-- NOUVEAU BLOC RITUEL DU JOUR SUR L'ACCUEIL -->
+    <!-- RITUEL DU JOUR -->
     <div class="card" style="padding-bottom: 8px;">
       <h2>✨ Le rituel du jour</h2>
       <div class="daily-box quote-box">
@@ -259,23 +252,19 @@
       </div>
     </div>
 
+    <!-- CENTRE D'ALERTES -->
     <div class="card">
       <h2>🚨 Centre d'alertes</h2>
       <div id="alertsList"></div>
     </div>
 
+    <!-- STATS REDUITS -->
     <div class="stat-grid">
       <div class="stat" id="statTemp" onclick="showView('haccp')">
         <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
       </div>
       <div class="stat danger" id="statAlerts" onclick="document.getElementById('alertsList').scrollIntoView({behavior:'smooth'})">
         <div class="num" id="dashAlertsCount">0</div><div class="lbl">Alertes globales</div>
-      </div>
-      <div class="stat warn" id="statStockFood" onclick="showView('aliments')">
-        <div class="num" id="dashFoodCount">0</div><div class="lbl">Alertes Aliments</div>
-      </div>
-      <div class="stat warn" id="statPharma" onclick="showView('soins')">
-        <div class="num" id="dashPharmaCount">0</div><div class="lbl">Alertes Pharmacie</div>
       </div>
     </div>
 
@@ -398,7 +387,7 @@
     </div>
   </div>
 
-  <!-- Vue SOINS (Uniquement Pharmacie et Nettoyage) -->
+  <!-- Vue SOINS (Pharmacie + Nettoyage) -->
   <div class="view" id="view-soins">
     <div class="tabs" id="soinsTabsNav">
       <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
@@ -440,7 +429,7 @@
     </div>
   </div>
 
-  <!-- Nouvelle Vue ADMIN (accessible depuis l'accueil) -->
+  <!-- Vue ADMIN -->
   <div class="view" id="view-admin">
     <div class="card">
       <h2>🏠 Établissement</h2>
@@ -468,7 +457,7 @@
     <button onclick="showView('dashboard')" class="secondary" style="margin-bottom: 20px;">Retour à l'accueil</button>
   </div>
 
-  <!-- Barre de navigation principale -->
+  <!-- Barre de navigation -->
   <nav>
     <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="icon">🏠</span>Accueil</button>
     <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
@@ -692,7 +681,7 @@ function switchSoinsTab(tabId) {
   if(tabId === 'tab-clean') tabButtons[1].classList.add('active');
 }
 
-// ============ SYNCHRONISATION FIREBASE (FILTRÉE PAR ÉTABLISSEMENT) ============
+// ============ SYNCHRONISATION FIREBASE ============
 function syncCollection(collectionName, stateVar) {
   db.collection(collectionName).where('establishment', '==', currentEstablishment).onSnapshot(snapshot => {
     state[stateVar] = [];
@@ -726,43 +715,54 @@ function renderAll() {
 function renderDashboard() {
   const today = startOfToday();
   const tempsToday = state.temps.filter(t => new Date(t.ts).getTime() >= today).length;
-  let alerts = []; let alertFoodCount = 0; let alertPharmaCount = 0;
+  let alerts = [];
   
-  state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name}`); alertFoodCount++; } });
+  state.foods.forEach(s => { if (s.qty <= s.min) { alerts.push(`🥕 Stock bas : ${s.name}`); } });
   state.diapers.forEach(s => { if (s.qty <= s.min) { alerts.push(`🧷 Stock bas : ${s.name}`); } });
   state.pharma.forEach(p => {
     if (p.exp) {
       const daysLeft = Math.floor((new Date(p.exp).getTime() - today) / (1000*60*60*24));
-      if (daysLeft < 0) { alerts.push(`💊 PÉRIMÉ : ${p.name}`); alertPharmaCount++; }
-      else if (daysLeft <= 30) { alerts.push(`💊 Expire bientôt : ${p.name} (J-${daysLeft})`); alertPharmaCount++; }
+      if (daysLeft < 0) { alerts.push(`💊 PÉRIMÉ : ${p.name}`); }
+      else if (daysLeft <= 30) { alerts.push(`💊 Expire bientôt : ${p.name} (J-${daysLeft})`); }
     }
-    if (p.qty <= 1) { alerts.push(`💊 Stock bas : ${p.name}`); alertPharmaCount++; }
+    if (p.qty <= 1) { alerts.push(`💊 Stock bas : ${p.name}`); }
   });
   const now = Date.now(); const h = 3600 * 1000;
   state.temps.forEach(t => { if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange) alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`); });
   state.samples.forEach(s => { if (now - new Date(s.ts).getTime() > 5*24*h) alerts.push(`🍽️ Plat témoin "${s.dish}" : à retirer`); });
 
+  // Ajout du rappel d'exportation dans les alertes
+  let isExportNeeded = checkExportReminderNeeded();
+  if (isExportNeeded) {
+    alerts.push(`📅 <b>Rappel : Pensez à faire votre sauvegarde hebdomadaire !</b><br><span style="font-size:12px; font-weight:normal; text-decoration:underline; cursor:pointer;" onclick="showView('admin')">Cliquez ici pour exporter vos données</span>`);
+  }
+
   document.getElementById('dashTempCount').textContent = tempsToday;
   document.getElementById('dashAlertsCount').textContent = alerts.length;
-  document.getElementById('dashFoodCount').textContent = alertFoodCount;
-  document.getElementById('dashPharmaCount').textContent = alertPharmaCount;
 
   const list = document.getElementById('alertsList');
-  if (alerts.length === 0) list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
-  else list.innerHTML = alerts.map(a => `<div class="list-item" style="background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;"><div class="info"><div class="title" style="color:var(--danger);">${a}</div></div></div>`).join('');
-
-  checkExportReminder();
+  if (alerts.length === 0) {
+    list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
+  } else {
+    list.innerHTML = alerts.map(a => {
+      // Style spécifique pour le rappel d'export
+      let style = "background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;";
+      let titleStyle = "color:var(--danger);";
+      if (a.includes('Rappel')) {
+        style = "background:#FEFCBF; padding: 12px; border-radius: 8px; margin-bottom:8px; border: 1px solid #F6E8B1;";
+        titleStyle = "color:#975A16;";
+      }
+      return `<div class="list-item" style="${style}"><div class="info"><div class="title" style="${titleStyle}">${a}</div></div></div>`;
+    }).join('');
+  }
 }
 
-function checkExportReminder() {
+// Vérifie si un export est nécessaire
+function checkExportReminderNeeded() {
   const lastExport = localStorage.getItem('creche_lastExport_' + currentEstablishment);
-  const banner = document.getElementById('exportReminder');
-  if (!lastExport) { banner.style.display = 'block'; } 
-  else {
-    const daysSince = (Date.now() - parseInt(lastExport)) / (1000 * 60 * 60 * 24);
-    if (daysSince >= 7) banner.style.display = 'block'; 
-    else banner.style.display = 'none';
-  }
+  if (!lastExport) return true; 
+  const daysSince = (Date.now() - parseInt(lastExport)) / (1000 * 60 * 60 * 24);
+  return daysSince >= 7;
 }
 
 function updateDatalists() {
@@ -1058,7 +1058,7 @@ function generatePDF() {
   document.getElementById('print-report').innerHTML = html;
   
   localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
-  checkExportReminder();
+  renderDashboard(); // Rafraîchit l'accueil pour enlever l'alerte d'export
 
   toast('📄 Préparation du PDF...');
   setTimeout(() => { window.print(); }, 500);
@@ -1079,7 +1079,7 @@ function exportCSV() {
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-${currentEstablishment}-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
   
   localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
-  checkExportReminder();
+  renderDashboard(); // Rafraîchit l'accueil pour enlever l'alerte d'export
 
   toast('📥 Export CSV téléchargé !');
 }
