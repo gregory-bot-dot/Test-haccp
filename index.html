@@ -226,10 +226,13 @@
       </div>
     </div>
 
-    <!-- 4. NOUVEAU BLOC EXPORT & SAUVEGARDE -->
+    <!-- 4. NOUVEAU BLOC EXPORT & ADMIN -->
     <div class="card">
-      <h2>📤 Export & Sauvegarde</h2>
-      <p class="meta" style="margin-bottom: 12px;">Générez vos rapports pour la PMI ou exportez vos données.</p>
+      <h2>📤 Admin & Sauvegarde</h2>
+      <p class="meta" style="margin-bottom: 12px;">Générez vos rapports ou accédez au panneau d'administration.</p>
+      
+      <button onclick="showView('soins'); switchSoinsTab('tab-admin');" style="background: #4a5568; margin-top: 0; margin-bottom: 8px;">⚙️ Panneau Admin & Déconnexion</button>
+      
       <div style="display: flex; gap: 8px;">
         <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 0;">📄 Rapport PDF</button>
         <button onclick="exportCSV()" class="secondary" style="margin-top: 0; border: 1px solid var(--border);">📊 Données CSV</button>
@@ -348,7 +351,7 @@
 
   <!-- Vue SOINS & ADMIN -->
   <div class="view" id="view-soins">
-    <div class="tabs">
+    <div class="tabs" id="soinsTabsNav">
       <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
       <button onclick="switchSoinsTab('tab-clean')">🧽 Nettoyage</button>
       <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
@@ -528,17 +531,28 @@ function showView(name) {
   document.getElementById('headerTitle').textContent = titles[name][0];
   document.getElementById('headerSub').textContent = titles[name][1];
 }
+
 function switchHaccpTab(tabId) {
   document.querySelectorAll('.haccp-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
-  document.querySelectorAll('#view-haccp .tabs button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  
+  const tabButtons = document.querySelectorAll('#view-haccp .tabs button');
+  tabButtons.forEach(b => b.classList.remove('active'));
+  
+  if(tabId === 'tab-temp') tabButtons[0].classList.add('active');
+  if(tabId === 'tab-samples') tabButtons[1].classList.add('active');
 }
+
 function switchSoinsTab(tabId) {
   document.querySelectorAll('.soins-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
-  document.querySelectorAll('#view-soins .tabs button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+  
+  const tabButtons = document.querySelectorAll('#view-soins .tabs button');
+  tabButtons.forEach(b => b.classList.remove('active'));
+  
+  if(tabId === 'tab-pharma') tabButtons[0].classList.add('active');
+  if(tabId === 'tab-clean') tabButtons[1].classList.add('active');
+  if(tabId === 'tab-admin') tabButtons[2].classList.add('active');
 }
 
 // ============ SYNCHRONISATION FIREBASE ============
