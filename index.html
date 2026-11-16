@@ -10,17 +10,9 @@
 <title>Les P'tites Mouettes</title>
 <style>
   :root {
-    --primary: #EF7C71; /* Corail doux */
-    --primary-dark: #D15F55; /* Corail plus foncé pour le clic */
-    --bg: #E8F6F9; /* Bleu ciel très clair */
-    --card: #ffffff;
-    --text: #2d3748;
-    --muted: #718096;
-    --border: #e2e8f0;
-    --danger: #e53e3e;
-    --warning: #dd6b20;
-    --success: #38a169;
-    --sand: #FDF3C7; /* Jaune sable */
+    --primary: #EF7C71; --primary-dark: #D15F55; --bg: #E8F6F9; 
+    --card: #ffffff; --text: #2d3748; --muted: #718096; --border: #e2e8f0;
+    --danger: #e53e3e; --warning: #dd6b20; --success: #38a169; --sand: #FDF3C7; 
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -28,14 +20,13 @@
     background: var(--bg); color: var(--text); font-size: 16px; padding-bottom: 80px;
   }
   
-  /* ÉCRAN DE CONNEXION */
-  #login-screen {
+  /* ÉCRANS PLEIN ÉCRAN (Connexion / Choix Etablissement) */
+  #login-screen, #establishment-screen {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
   }
   .login-box {
-    background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(239,124,113,0.15); width: 100%; max-width: 400px; text-align: center;
-    border: 2px solid white;
+    background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(239,124,113,0.15); width: 100%; max-width: 450px; text-align: center; border: 2px solid white;
   }
   .login-box h1 { margin: 15px 0 5px; font-size: 24px; color: var(--primary); }
   .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
@@ -43,16 +34,29 @@
   .login-box input:focus { border-color: var(--primary); }
   .login-box button { background: var(--primary); font-size: 16px; padding: 15px; box-shadow: 0 4px 10px rgba(239,124,113,0.3); }
   
-  .login-logo { width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  .login-logo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;}
+
+  /* CARTES ETABLISSEMENT */
+  .establishment-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: white; color: var(--primary-dark); border: 2px solid var(--primary);
+    padding: 20px; border-radius: 16px; font-size: 20px; font-weight: 700; margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(239,124,113,0.1); width: 100%; cursor: pointer; transition: all 0.2s;
+  }
+  .establishment-btn:active { background: var(--primary); color: white; transform: scale(0.98); }
+
+  /* MESSAGE DU JOUR */
+  .daily-quote {
+    background: var(--sand); border: 2px dashed #E6C84C; color: #8C6C1A;
+    padding: 16px; border-radius: 16px; margin-bottom: 25px; text-align: center;
+    font-style: italic; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+  .daily-quote span { display: block; font-style: normal; font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #B7791F; text-transform: uppercase; letter-spacing: 1px;}
 
   /* APPLICATION */
   #app-content { display: none; }
-
   header {
-    background: var(--primary); color: white; padding: 16px;
-    position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(239,124,113,0.2);
-    border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;
-    display: flex; align-items: center; gap: 12px;
+    background: var(--primary); color: white; padding: 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(239,124,113,0.2); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; display: flex; align-items: center; gap: 12px;
   }
   .header-logo { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
   .header-texts { display: flex; flex-direction: column; }
@@ -63,38 +67,22 @@
   .view.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-  .card {
-    background: var(--card); border-radius: 16px; padding: 16px;
-    margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
   .card h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--primary-dark);}
   .card .meta { font-size: 13px; color: var(--muted); }
 
   label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: var(--text); }
-  input, select, textarea {
-    width: 100%; padding: 14px; border: 1px solid var(--border);
-    border-radius: 12px; font-size: 16px; background: #f8fafc; font-family: inherit;
-    transition: border-color 0.2s;
-  }
+  input, select, textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; background: #f8fafc; font-family: inherit; transition: border-color 0.2s; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
   
-  button {
-    background: var(--primary); color: white; border: none; padding: 14px 16px;
-    border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
-    width: 100%; margin-top: 12px; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px;
-    box-shadow: 0 2px 4px rgba(239,124,113,0.2);
-  }
+  button { background: var(--primary); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 12px; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(239,124,113,0.2); }
   button:active { background: var(--primary-dark); transform: scale(0.98); box-shadow: none; }
   button.secondary { background: #edf2f7; color: var(--text); box-shadow: none;}
   button.danger { background: #fff5f5; color: var(--danger); box-shadow: none; border: 1px solid #fed7d7;}
   button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border-radius: 8px; box-shadow: none;}
 
   .action-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
-  .action-toggle label {
-    flex: 1; padding: 12px; text-align: center; border: 2px solid var(--border);
-    border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px;
-    color: var(--muted); margin: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
+  .action-toggle label { flex: 1; padding: 12px; text-align: center; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); margin: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-toggle input { display: none; }
   .action-toggle input:checked + label { border-color: var(--primary); background: #fff0ef; color: var(--primary-dark); }
 
@@ -111,11 +99,7 @@
   .list-item .detail { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
   .photo-thumb { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); margin-top: 6px;}
 
-  nav {
-    position: fixed; bottom: 0; left: 0; right: 0; background: white;
-    display: flex; border-top: 1px solid var(--border); z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
-  }
+  nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 100; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 15px rgba(0,0,0,0.05); }
   nav button { flex: 1; background: none; color: var(--muted); border: none; padding: 12px 4px; font-size: 11px; font-weight: 600; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 0; box-shadow: none;}
   nav button.active { color: var(--primary); }
   nav button .icon { font-size: 24px; line-height: 1; margin-bottom: 2px; transition: transform 0.2s; }
@@ -135,11 +119,7 @@
   .stat.danger .num { color: var(--danger); }
   .stat.warn .num { color: var(--warning); }
 
-  .stock-card { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 16px; background: white; border-radius: 16px; margin-bottom: 12px; 
-    border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-  }
+  .stock-card { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: white; border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
   .stock-card.alert { border-color: #feb2b2; background: #fffaf0; }
   .stock-info { flex: 1; }
   .stock-name { font-weight: 700; font-size: 16px; color: var(--text); }
@@ -155,25 +135,20 @@
   .history-log { font-size: 13px; color: var(--muted); border-left: 3px solid var(--primary); padding-left: 12px; margin-bottom: 12px; line-height: 1.4; }
   .history-log strong { color: var(--text); }
 
-  .toast {
-    position: fixed; bottom: 90px; left: 16px; right: 16px;
-    background: var(--text); color: white; padding: 14px 16px;
-    border-radius: 12px; font-size: 14px; text-align: center; font-weight: 500;
-    z-index: 20000; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
+  .toast { position: fixed; bottom: 90px; left: 16px; right: 16px; background: var(--text); color: white; padding: 14px 16px; border-radius: 12px; font-size: 14px; text-align: center; font-weight: 500; z-index: 20000; opacity: 0; transition: all 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   .toast.show { opacity: 1; transform: translateY(-10px); }
 
-  #exportReminder {
-    display: none; background: var(--sand); border: 2px solid #E6C84C; color: #8C6C1A;
-    padding: 12px; border-radius: 12px; margin-bottom: 16px; text-align: center;
-    font-weight: 600; font-size: 14px; cursor: pointer; animation: pulse 2s infinite;
-  }
+  #exportReminder { display: none; background: var(--sand); border: 2px solid #E6C84C; color: #8C6C1A; padding: 12px; border-radius: 12px; margin-bottom: 16px; text-align: center; font-weight: 600; font-size: 14px; cursor: pointer; animation: pulse 2s infinite; }
   @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+  /* BLOC ADMIN COMPACT */
+  .admin-compact { display: flex; gap: 8px; margin-top: 10px; }
+  .admin-compact button { margin-top: 0; padding: 10px; font-size: 13px; }
 
   #print-report { display: none; }
   @media print {
     body { background: white; padding: 0; font-size: 12px; }
-    .view, nav, header, .toast, #login-screen { display: none !important; }
+    .view, nav, header, .toast, #login-screen, #establishment-screen { display: none !important; }
     #print-report { display: block !important; padding: 20px; }
     .report-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #EF7C71; padding-bottom: 10px; color: #EF7C71;}
     .report-header h1 { margin: 0; font-size: 24px; }
@@ -205,6 +180,28 @@
   </div>
 </div>
 
+<!-- ÉCRAN DE SÉLECTION D'ÉTABLISSEMENT -->
+<div id="establishment-screen" style="display:none;">
+  <div class="login-box">
+    <img src="logo.jpg" alt="Logo P'tites Mouettes" class="login-logo" style="width: 100px; height: 100px;">
+    
+    <!-- MESSAGE DU JOUR -->
+    <div class="daily-quote">
+      <span>✨ Le rituel du jour ✨</span>
+      <div id="daily-message-content">Chargement...</div>
+    </div>
+
+    <h2 style="margin-bottom: 20px; color: var(--text); font-size: 18px;">Où êtes-vous aujourd'hui ?</h2>
+    
+    <button class="establishment-btn" onclick="selectEstablishment('Douarnenez')">
+      🌊 Douarnenez
+    </button>
+    <button class="establishment-btn" onclick="selectEstablishment('Concarneau')">
+      ⛵ Concarneau
+    </button>
+  </div>
+</div>
+
 <!-- CONTENU DE L'APPLICATION -->
 <div id="app-content">
   <div id="print-report"></div>
@@ -220,12 +217,10 @@
   <!-- Vue Tableau de bord -->
   <div class="view active" id="view-dashboard">
     
-    <!-- BANNIERE DE RAPPEL EXPORT -->
     <div id="exportReminder" onclick="showView('soins'); switchSoinsTab('tab-admin');">
       📅 C'est l'heure de la sauvegarde ! <br><span style="font-weight:400; font-size:12px;">Cliquez ici pour faire votre export hebdomadaire.</span>
     </div>
 
-    <!-- 1. ACTIONS RAPIDES -->
     <div class="card">
       <h2>⚡ Actions rapides</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -236,13 +231,11 @@
       </div>
     </div>
 
-    <!-- 2. CENTRE D'ALERTES -->
     <div class="card">
       <h2>🚨 Centre d'alertes</h2>
       <div id="alertsList"></div>
     </div>
 
-    <!-- 3. CHIFFRES / STATS -->
     <div class="stat-grid">
       <div class="stat" id="statTemp" onclick="showView('haccp')">
         <div class="num" id="dashTempCount">0</div><div class="lbl">Contrôles aujourd'hui</div>
@@ -258,16 +251,13 @@
       </div>
     </div>
 
-    <!-- 4. EXPORT & ADMIN -->
+    <!-- BLOC ADMIN COMPACT -->
     <div class="card">
       <h2>📤 Admin & Sauvegarde</h2>
-      <p class="meta" style="margin-bottom: 12px;">Générez vos rapports ou accédez au panneau d'administration.</p>
-      
-      <button onclick="showView('soins'); switchSoinsTab('tab-admin');" style="background: #4a5568; margin-top: 0; margin-bottom: 8px;">⚙️ Panneau Admin & Déconnexion</button>
-      
-      <div style="display: flex; gap: 8px;">
-        <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 0;">📄 Rapport PDF</button>
-        <button onclick="exportCSV()" class="secondary" style="margin-top: 0; border: 1px solid var(--border);">📊 Données CSV</button>
+      <div class="admin-compact">
+        <button onclick="showView('soins'); switchSoinsTab('tab-admin');" style="background: #4a5568;">⚙️ Admin</button>
+        <button onclick="generatePDF()" style="background: #e53e3e;">📄 PDF</button>
+        <button onclick="exportCSV()" class="secondary" style="border: 1px solid var(--border);">📊 CSV</button>
       </div>
     </div>
 
@@ -425,18 +415,22 @@
 
     <div id="tab-admin" class="soins-subview" style="display:none">
       <div class="card">
+        <h2>🏠 Établissement</h2>
+        <p class="meta">Vous êtes actuellement sur : <strong id="current-est-display" style="color:var(--primary); font-size:16px;"></strong></p>
+        <button onclick="changeEstablishment()" style="background: #edf2f7; color: var(--text); border: 1px solid var(--border);">🔄 Changer d'établissement</button>
+      </div>
+      <div class="card">
         <h2>📄 Générateur de Rapport</h2>
-        <p class="meta">Génère un document propre avec toutes les données du jour, prêt à être imprimé ou enregistré en PDF pour la PMI.</p>
+        <p class="meta">Génère un document propre avec toutes les données du jour pour la PMI.</p>
         <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
       </div>
       <div class="card">
         <h2>💾 Sauvegarde (CSV)</h2>
-        <p class="meta">Exporte toutes les données brutes dans un fichier tableur (Excel).</p>
+        <p class="meta">Exporte toutes les données brutes dans un fichier Excel.</p>
         <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
       </div>
       <div class="card" style="border: 1px solid #fed7d7;">
         <h2 style="color: var(--danger);">🚪 Session</h2>
-        <p class="meta">L'application restera connectée sur cette tablette jusqu'à déconnexion manuelle.</p>
         <button onclick="logoutUser()" class="danger">Se déconnecter</button>
       </div>
     </div>
@@ -470,18 +464,51 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// ============ DONNÉES ============
-const DEFAULT_EQUIPMENT = [
-  { name: "Frigo cuisine", type: "frigo", min: 0, max: 4 },
-  { name: "Frigo biberonnerie", type: "frigo", min: 0, max: 4 },
-  { name: "Congélateur", type: "congel", min: -18, max: -15 },
-  { name: "Frigo plats témoins", type: "frigo", min: 0, max: 3 }
+// ============ MESSAGES DU JOUR (CITATIONS & ACTIVITÉS) ============
+const DAILY_MESSAGES = [
+  "L'enfance est un voyage dont on ne revient jamais tout à fait.",
+  "Activité du jour : Atelier transvasement avec des grosses perles.",
+  "Le jeu est le travail de l'enfant. - Maria Montessori",
+  "Chaque enfant est un artiste. - Pablo Picasso",
+  "Activité : Peinture avec les mains (prévoir une bonne blouse !).",
+  "Un enfant qui lit sera un adulte qui pense. - A. de Saint-Exupéry",
+  "Activité : Écouter les bruits de la nature dehors.",
+  "La meilleure façon de rendre les enfants bons, c'est de les rendre heureux.",
+  "Activité : Pâte à modeler maison avec de la farine et de l'eau.",
+  "Il faut tout un village pour élever un enfant. - Proverbe africain",
+  "Activité : Motricité libre avec des coussins et des tunnels.",
+  "Les enfants sont des rayons de soleil qui illuminent nos journées.",
+  "Activité : Lecture d'un album sur les émotions.",
+  "Le plus grand cadeau que l'on puisse faire à un enfant, c'est du temps.",
+  "Activité : Jeu de construction avec des grosses briques.",
+  "Les mains dans la peinture, c'est bon pour la motricité !",
+  "Activité : Comptines et rondes avec les mains.",
+  "Un enfant qui s'amuse est un enfant qui apprend.",
+  "Activité : Atelier cuisine (préparer la collation ensemble).",
+  "L'éducation est l'arme la plus puissante pour changer le monde.",
+  "Activité : Jeu symbolique (dînette, poupées).",
+  "Chaque enfant est unique et merveilleux à sa façon.",
+  "Activité : Éveil musical avec des maracas maison.",
+  "La curiosité est le moteur de l'apprentissage.",
+  "Activité : Sortie au parc pour observer les oiseaux.",
+  "Les enfants ont besoin de racines et d'ailes.",
+  "Activité : Jeu de tri de couleurs avec des objets du quotidien.",
+  "Il n'y a pas de mauvaise météo, que des mauvais vêtements !",
+  "Activité : Atelier dessin avec des craies grasses.",
+  "Sourire à un enfant, c'est lui offrir sa première leçon de bonheur."
 ];
 
 let state = {
   temps: [], samples: [], cleans: [], foods: [], diapers: [], pharma: [], stockLogs: [],
-  equipment: DEFAULT_EQUIPMENT
+  equipment: [
+    { name: "Frigo cuisine", type: "frigo", min: 0, max: 4 },
+    { name: "Frigo biberonnerie", type: "frigo", min: 0, max: 4 },
+    { name: "Congélateur", type: "congel", min: -18, max: -15 },
+    { name: "Frigo plats témoins", type: "frigo", min: 0, max: 3 }
+  ]
 };
+
+let currentEstablishment = null;
 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
@@ -506,6 +533,19 @@ function compressImage(file) {
   });
 }
 
+// ============ GESTION DU MESSAGE DU JOUR ============
+function loadDailyMessage() {
+  // Utilise le jour de l'année pour choisir un message (change tous les jours)
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  
+  const msgIndex = dayOfYear % DAILY_MESSAGES.length;
+  document.getElementById('daily-message-content').textContent = DAILY_MESSAGES[msgIndex];
+}
+
 // ============ AUTHENTIFICATION ============
 function loginUser() {
   const email = document.getElementById('loginEmail').value.trim();
@@ -513,22 +553,17 @@ function loginUser() {
   const errorMsg = document.getElementById('loginError');
   
   if (!email || !password) { errorMsg.textContent = "Veuillez remplir tous les champs."; errorMsg.style.display = 'block'; return; }
-  
   errorMsg.style.display = 'none';
-  auth.signInWithEmailAndPassword(email, password)
-    .catch((error) => {
-      console.error("Erreur de connexion:", error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMsg.textContent = "Email ou mot de passe incorrect.";
-      } else {
-        errorMsg.textContent = "Erreur : " + error.message;
-      }
-      errorMsg.style.display = 'block';
-    });
+  
+  auth.signInWithEmailAndPassword(email, password).catch((error) => {
+    errorMsg.textContent = "Email ou mot de passe incorrect.";
+    errorMsg.style.display = 'block';
+  });
 }
 
 function logoutUser() {
   if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+    localStorage.removeItem('creche_establishment');
     auth.signOut();
   }
 }
@@ -536,16 +571,48 @@ function logoutUser() {
 auth.onAuthStateChanged((user) => {
   if (user) {
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
-    document.getElementById('loginPassword').value = '';
-    initApp();
+    checkEstablishment();
   } else {
     document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('establishment-screen').style.display = 'none';
     document.getElementById('app-content').style.display = 'none';
-    state = { temps: [], samples: [], cleans: [], foods: [], diapers: [], pharma: [], stockLogs: [], equipment: DEFAULT_EQUIPMENT };
-    renderAll();
   }
 });
+
+// ============ LOGIQUE ETABLISSEMENT ============
+function checkEstablishment() {
+  loadDailyMessage();
+  const saved = localStorage.getItem('creche_establishment');
+  
+  if (saved) {
+    currentEstablishment = saved;
+    document.getElementById('establishment-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    document.getElementById('headerTitle').textContent = "Espace " + currentEstablishment;
+    document.getElementById('current-est-display').textContent = currentEstablishment;
+    initApp();
+  } else {
+    document.getElementById('establishment-screen').style.display = 'flex';
+    document.getElementById('app-content').style.display = 'none';
+  }
+}
+
+function selectEstablishment(name) {
+  currentEstablishment = name;
+  localStorage.setItem('creche_establishment', name);
+  document.getElementById('establishment-screen').style.display = 'none';
+  document.getElementById('app-content').style.display = 'block';
+  document.getElementById('headerTitle').textContent = "Espace " + currentEstablishment;
+  document.getElementById('current-est-display').textContent = currentEstablishment;
+  initApp();
+}
+
+function changeEstablishment() {
+  if(confirm("Voulez-vous changer d'établissement ?")) {
+    localStorage.removeItem('creche_establishment');
+    window.location.reload(); // Recharge l'app pour revenir à l'écran de choix
+  }
+}
 
 // ============ NAVIGATION ============
 function showView(name) {
@@ -553,8 +620,9 @@ function showView(name) {
   document.getElementById('view-' + name).classList.add('active');
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
+  
   const titles = {
-    dashboard: ['Espace Crèche', 'Tableau de bord'],
+    dashboard: ['Espace ' + currentEstablishment, 'Tableau de bord'],
     haccp: ['HACCP', 'Sécurité alimentaire'],
     aliments: ['Aliments', 'Gestion des repas'],
     couches: ['Couches', 'Hygiène & Changes'],
@@ -567,10 +635,8 @@ function showView(name) {
 function switchHaccpTab(tabId) {
   document.querySelectorAll('.haccp-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
-  
   const tabButtons = document.querySelectorAll('#view-haccp .tabs button');
   tabButtons.forEach(b => b.classList.remove('active'));
-  
   if(tabId === 'tab-temp') tabButtons[0].classList.add('active');
   if(tabId === 'tab-samples') tabButtons[1].classList.add('active');
 }
@@ -578,18 +644,16 @@ function switchHaccpTab(tabId) {
 function switchSoinsTab(tabId) {
   document.querySelectorAll('.soins-subview').forEach(v => v.style.display = 'none');
   document.getElementById(tabId).style.display = 'block';
-  
   const tabButtons = document.querySelectorAll('#view-soins .tabs button');
   tabButtons.forEach(b => b.classList.remove('active'));
-  
   if(tabId === 'tab-pharma') tabButtons[0].classList.add('active');
   if(tabId === 'tab-clean') tabButtons[1].classList.add('active');
   if(tabId === 'tab-admin') tabButtons[2].classList.add('active');
 }
 
-// ============ SYNCHRONISATION FIREBASE ============
+// ============ SYNCHRONISATION FIREBASE (FILTRÉE PAR ÉTABLISSEMENT) ============
 function syncCollection(collectionName, stateVar) {
-  db.collection(collectionName).onSnapshot(snapshot => {
+  db.collection(collectionName).where('establishment', '==', currentEstablishment).onSnapshot(snapshot => {
     state[stateVar] = [];
     snapshot.forEach(doc => {
       state[stateVar].push({ id: doc.id, ...doc.data() });
@@ -602,6 +666,9 @@ function syncCollection(collectionName, stateVar) {
 }
 
 function initApp() {
+  // On vide les données locales avant de recharger celles du bon établissement
+  state.temps = []; state.samples = []; state.cleans = []; state.foods = []; state.diapers = []; state.pharma = []; state.stockLogs = [];
+  
   syncCollection('temps', 'temps');
   syncCollection('samples', 'samples');
   syncCollection('cleans', 'cleans');
@@ -648,12 +715,10 @@ function renderDashboard() {
 }
 
 function checkExportReminder() {
-  const lastExport = localStorage.getItem('creche_lastExport');
+  const lastExport = localStorage.getItem('creche_lastExport_' + currentEstablishment);
   const banner = document.getElementById('exportReminder');
-  
-  if (!lastExport) {
-    banner.style.display = 'block'; 
-  } else {
+  if (!lastExport) { banner.style.display = 'block'; } 
+  else {
     const daysSince = (Date.now() - parseInt(lastExport)) / (1000 * 60 * 60 * 24);
     if (daysSince >= 7) banner.style.display = 'block'; 
     else banner.style.display = 'none';
@@ -706,7 +771,7 @@ async function saveTemp() {
   let photoBase64 = null; const pInput = document.getElementById('tempPhoto');
   if (pInput.files && pInput.files[0]) { toast('📸 Traitement...'); photoBase64 = await compressImage(pInput.files[0]); }
   
-  db.collection('temps').add({ ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 })
+  db.collection('temps').add({ establishment: currentEstablishment, ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 })
     .then(() => { toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); closeTempForm(); })
     .catch(e => toast('❌ Erreur: ' + e.message));
 }
@@ -725,7 +790,7 @@ function openSampleForm() { document.getElementById('sampleFormCard').style.disp
 function closeSampleForm() { document.getElementById('sampleFormCard').style.display = 'none'; }
 function saveSample() {
   if (!document.getElementById('sampleDish').value.trim()) return toast('⚠️ Nom du plat ?');
-  db.collection('samples').add({ ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 })
+  db.collection('samples').add({ establishment: currentEstablishment, ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 })
     .then(() => { toast('✅ Enregistré'); closeSampleForm(); })
     .catch(e => toast('❌ Erreur: ' + e.message));
 }
@@ -761,11 +826,11 @@ async function saveStockItem(category) {
     logType = action === 'set' ? "set" : "in";
   } else {
     const finalMin = isNaN(min) ? 3 : min;
-    db.collection(collectionName).add({ name, qty, min: finalMin });
+    db.collection(collectionName).add({ establishment: currentEstablishment, name, qty, min: finalMin });
     logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
   }
 
-  db.collection('stockLogs').add({ ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 })
+  db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 })
     .then(() => {
       toast(`✅ Mouvement enregistré !`);
       document.getElementById(prefix + 'Name').value = '';
@@ -810,7 +875,7 @@ function updateStockQty(category, id, delta) {
     let newQty = Math.max(0, item.qty + delta);
     const collectionName = category === 'food' ? 'foods' : 'diapers';
     db.collection(collectionName).doc(id).update({ qty: newQty });
-    db.collection('stockLogs').add({ ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
+    db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
   }
 }
 
@@ -830,10 +895,10 @@ function savePharmaItem() {
     if (exp) updateData.exp = exp;
     db.collection('pharma').doc(existingItem.id).update(updateData);
   } else {
-    db.collection('pharma').add({ name, qty, exp });
+    db.collection('pharma').add({ establishment: currentEstablishment, name, qty, exp });
   }
   
-  db.collection('stockLogs').add({ ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null })
+  db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null })
     .then(() => {
       toast(`✅ Pharmacie mise à jour !`);
       document.getElementById('pharmaName').value = '';
@@ -881,7 +946,7 @@ function openCleanForm() { document.getElementById('cleanFormCard').style.displa
 function closeCleanForm() { document.getElementById('cleanFormCard').style.display = 'none'; }
 function saveClean() {
   if (!document.getElementById('cleanTask').value.trim() || !document.getElementById('cleanOperator').value.trim()) return toast('⚠️ Champs manquants');
-  db.collection('cleans').add({ ts: new Date().toISOString(), zone: document.getElementById('cleanZone').value, task: document.getElementById('cleanTask').value.trim(), operator: document.getElementById('cleanOperator').value.trim() })
+  db.collection('cleans').add({ establishment: currentEstablishment, ts: new Date().toISOString(), zone: document.getElementById('cleanZone').value, task: document.getElementById('cleanTask').value.trim(), operator: document.getElementById('cleanOperator').value.trim() })
     .then(() => { toast('✅ Enregistré'); closeCleanForm(); });
 }
 
@@ -897,7 +962,7 @@ function deleteDoc(collectionName, id) {
 /* --- GÉNÉRATION PDF & CSV --- */
 function generatePDF() {
   const todayStrFR = new Date().toLocaleDateString('fr-FR');
-  let html = `<div class="report-header"><h1>Rapport d'Activité - Les P'tites Mouettes</h1><p>Généré le ${todayStrFR}</p></div>`;
+  let html = `<div class="report-header"><h1>Rapport d'Activité - ${currentEstablishment}</h1><p>Généré le ${todayStrFR}</p></div>`;
 
   const todayTemps = state.temps.filter(t => new Date(t.ts).getTime() >= startOfToday());
   html += `<div class="report-section"><h2>1. Contrôles HACCP (Aujourd'hui)</h2>`;
@@ -952,7 +1017,7 @@ function generatePDF() {
 
   document.getElementById('print-report').innerHTML = html;
   
-  localStorage.setItem('creche_lastExport', Date.now());
+  localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
   checkExportReminder();
 
   toast('📄 Préparation du PDF...');
@@ -971,9 +1036,9 @@ function exportCSV() {
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-data-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-${currentEstablishment}-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
   
-  localStorage.setItem('creche_lastExport', Date.now());
+  localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
   checkExportReminder();
 
   toast('📥 Export CSV téléchargé !');
