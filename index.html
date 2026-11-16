@@ -39,7 +39,7 @@
   .login-logo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 10px;}
 
   /* BLOCS DU JOUR (Citation & Activité) */
-  .daily-boxes { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; text-align: left; }
+  .daily-boxes { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; text-align: left; }
   .daily-box { padding: 15px; border-radius: 12px; font-size: 14px; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
   .daily-box span { display: block; font-weight: 700; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
   
@@ -51,7 +51,7 @@
 
   /* BULLES ETABLISSEMENT */
   .establishment-title { margin-bottom: 15px; color: var(--muted); font-size: 14px; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px;}
-  .bubble-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+  .bubble-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;}
   
   .bubble {
     width: 130px; height: 130px; border-radius: 50%;
@@ -201,15 +201,10 @@
   <div class="login-box">
     <img src="logo.jpg" alt="Logo P'tites Mouettes" class="login-logo" style="width: 90px; height: 90px; margin-bottom: 15px;">
     
-    <!-- BLOCS DU JOUR -->
-    <div class="daily-boxes">
+    <div class="daily-boxes" style="margin-bottom: 25px;">
       <div class="daily-box quote-box">
         <span>✨ La citation du jour ✨</span>
         <div id="daily-quote-content">Chargement...</div>
-      </div>
-      <div class="daily-box activity-box">
-        <span>🎨 L'activité du jour 🎨</span>
-        <div id="daily-activity-content">Chargement...</div>
       </div>
     </div>
 
@@ -224,6 +219,13 @@
       <div class="bubble" onclick="selectEstablishment('Concarneau')">
         <div class="icon">⛵</div>
         <div class="name">Concarneau</div>
+      </div>
+    </div>
+
+    <div class="daily-boxes">
+      <div class="daily-box activity-box">
+        <span>🎨 L'activité du jour 🎨</span>
+        <div id="daily-activity-content">Chargement...</div>
       </div>
     </div>
   </div>
@@ -244,7 +246,7 @@
   <!-- Vue Tableau de bord -->
   <div class="view active" id="view-dashboard">
     
-    <div id="exportReminder" onclick="showView('soins'); switchSoinsTab('tab-admin');">
+    <div id="exportReminder" onclick="showView('admin');">
       📅 C'est l'heure de la sauvegarde ! <br><span style="font-weight:400; font-size:12px;">Cliquez ici pour faire votre export hebdomadaire.</span>
     </div>
 
@@ -281,7 +283,7 @@
     <div class="card">
       <h2>📤 Admin & Sauvegarde</h2>
       <div class="admin-compact">
-        <button onclick="showView('soins'); switchSoinsTab('tab-admin');" style="background: #4a5568;">⚙️ Admin</button>
+        <button onclick="showView('admin')" style="background: #4a5568;">⚙️ Admin</button>
         <button onclick="generatePDF()" style="background: #e53e3e;">📄 PDF</button>
         <button onclick="exportCSV()" class="secondary" style="border: 1px solid var(--border);">📊 CSV</button>
       </div>
@@ -397,12 +399,11 @@
     </div>
   </div>
 
-  <!-- Vue SOINS & ADMIN -->
+  <!-- Vue SOINS (Uniquement Pharmacie et Nettoyage) -->
   <div class="view" id="view-soins">
     <div class="tabs" id="soinsTabsNav">
       <button class="active" onclick="switchSoinsTab('tab-pharma')">💊 Pharmacie</button>
       <button onclick="switchSoinsTab('tab-clean')">🧽 Nettoyage</button>
-      <button onclick="switchSoinsTab('tab-admin')">📄 Admin & PDF</button>
     </div>
 
     <div id="tab-pharma" class="soins-subview">
@@ -438,31 +439,37 @@
         <div id="cleanList" style="margin-top: 16px;"></div>
       </div>
     </div>
-
-    <div id="tab-admin" class="soins-subview" style="display:none">
-      <div class="card">
-        <h2>🏠 Établissement</h2>
-        <p class="meta">Vous êtes actuellement sur : <strong id="current-est-display" style="color:var(--primary); font-size:16px;"></strong></p>
-        <button onclick="changeEstablishment()" style="background: #edf2f7; color: var(--text); border: 1px solid var(--border);">🔄 Changer d'établissement</button>
-      </div>
-      <div class="card">
-        <h2>📄 Générateur de Rapport</h2>
-        <p class="meta">Génère un document propre avec toutes les données du jour pour la PMI.</p>
-        <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
-      </div>
-      <div class="card">
-        <h2>💾 Sauvegarde (CSV)</h2>
-        <p class="meta">Exporte toutes les données brutes dans un fichier Excel.</p>
-        <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
-      </div>
-      <div class="card" style="border: 1px solid #fed7d7;">
-        <h2 style="color: var(--danger);">🚪 Session</h2>
-        <button onclick="logoutUser()" class="danger">Se déconnecter</button>
-      </div>
-    </div>
   </div>
 
-  <!-- Barre de navigation -->
+  <!-- Nouvelle Vue ADMIN (Cachée de la nav principale, accessible depuis l'accueil) -->
+  <div class="view" id="view-admin">
+    <div class="card">
+      <h2>🏠 Établissement</h2>
+      <p class="meta">Vous êtes actuellement sur : <strong id="current-est-display" style="color:var(--primary); font-size:16px;"></strong></p>
+      <button onclick="changeEstablishment()" style="background: #edf2f7; color: var(--text); border: 1px solid var(--border);">🔄 Changer d'établissement</button>
+    </div>
+    
+    <div class="card">
+      <h2>📄 Générateur de Rapport</h2>
+      <p class="meta">Génère un document propre avec toutes les données du jour pour la PMI.</p>
+      <button onclick="generatePDF()" style="background: #e53e3e; margin-top: 16px;">📥 Générer le Rapport PDF</button>
+    </div>
+    
+    <div class="card">
+      <h2>💾 Sauvegarde (CSV)</h2>
+      <p class="meta">Exporte toutes les données brutes dans un fichier Excel.</p>
+      <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
+    </div>
+    
+    <div class="card" style="border: 1px solid #fed7d7;">
+      <h2 style="color: var(--danger);">🚪 Session</h2>
+      <button onclick="logoutUser()" class="danger">Se déconnecter</button>
+    </div>
+    
+    <button onclick="showView('dashboard')" class="secondary" style="margin-bottom: 20px;">Retour à l'accueil</button>
+  </div>
+
+  <!-- Barre de navigation principale -->
   <nav>
     <button class="active" data-view="dashboard" onclick="showView('dashboard')"><span class="icon">🏠</span>Accueil</button>
     <button data-view="haccp" onclick="showView('haccp')"><span class="icon">🌡️</span>HACCP</button>
@@ -572,11 +579,9 @@ function loadDailyContent() {
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
   
-  // Citation
   const quoteIndex = dayOfYear % DAILY_QUOTES.length;
   document.getElementById('daily-quote-content').textContent = DAILY_QUOTES[quoteIndex];
   
-  // Activité (Décalage pour ne pas avoir la même paire tous les jours)
   const activityIndex = (dayOfYear + 7) % DAILY_ACTIVITIES.length;
   document.getElementById('daily-activity-content').textContent = DAILY_ACTIVITIES[activityIndex];
 }
@@ -653,15 +658,19 @@ function changeEstablishment() {
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
+  
+  // Gérer l'état actif de la barre de navigation du bas
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.querySelector(`nav button[data-view="${name}"]`).classList.add('active');
+  const navBtn = document.querySelector(`nav button[data-view="${name}"]`);
+  if(navBtn) navBtn.classList.add('active');
   
   const titles = {
     dashboard: ['Espace ' + currentEstablishment, 'Tableau de bord'],
     haccp: ['HACCP', 'Sécurité alimentaire'],
     aliments: ['Aliments', 'Gestion des repas'],
     couches: ['Couches', 'Hygiène & Changes'],
-    soins: ['Soins & Admin', 'Pharmacie, Nettoyage, PDF']
+    soins: ['Soins', 'Pharmacie, Nettoyage'],
+    admin: ['Administration', 'Gestion et Sauvegardes']
   };
   document.getElementById('headerTitle').textContent = titles[name][0];
   document.getElementById('headerSub').textContent = titles[name][1];
@@ -683,7 +692,6 @@ function switchSoinsTab(tabId) {
   tabButtons.forEach(b => b.classList.remove('active'));
   if(tabId === 'tab-pharma') tabButtons[0].classList.add('active');
   if(tabId === 'tab-clean') tabButtons[1].classList.add('active');
-  if(tabId === 'tab-admin') tabButtons[2].classList.add('active');
 }
 
 // ============ SYNCHRONISATION FIREBASE (FILTRÉE PAR ÉTABLISSEMENT) ============
