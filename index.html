@@ -90,13 +90,14 @@
 
   label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: var(--text); }
   input, select, textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; font-size: 16px; background: #f8fafc; font-family: inherit; transition: border-color 0.2s; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(239,124,113,0.15); }
   
   button { background: var(--primary); color: white; border: none; padding: 14px 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 12px; font-family: inherit; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(239,124,113,0.2); }
   button:active { background: var(--primary-dark); transform: scale(0.98); box-shadow: none; }
   button.secondary { background: #edf2f7; color: var(--text); box-shadow: none;}
   button.danger { background: #fff5f5; color: var(--danger); box-shadow: none; border: 1px solid #fed7d7;}
   button.small { width: auto; padding: 8px 12px; font-size: 14px; margin: 0; border-radius: 8px; box-shadow: none;}
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .action-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
   .action-toggle label { flex: 1; padding: 12px; text-align: center; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); margin: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -173,6 +174,8 @@
     .report-table th { background: #fcf0ef; font-weight: bold; }
     .report-table .danger-text { color: red; font-weight: bold; }
   }
+
+  .version-tag { font-size: 11px; color: var(--muted); text-align: center; margin-top: 20px; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -337,7 +340,7 @@
       <h2>🥕 Mouvement de Stock</h2>
       <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
         <label style="margin-top:0;">Nom du produit</label>
-        <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;">
+        <input type="text" id="foodName" list="foodDatalist" placeholder="Rechercher ou créer..." style="background: white;" oninput="prefillStock('food')">
         <datalist id="foodDatalist"></datalist>
         <label>Type de mouvement</label>
         <div class="action-toggle">
@@ -366,7 +369,7 @@
       <h2>🧷 Mouvement de Stock</h2>
       <div style="background: #f8fafc; padding: 16px; border-radius: 12px;">
         <label style="margin-top:0;">Nom du produit</label>
-        <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;">
+        <input type="text" id="diaperName" list="diaperDatalist" placeholder="Rechercher ou créer..." style="background: white;" oninput="prefillStock('diaper')">
         <datalist id="diaperDatalist"></datalist>
         <label>Type de mouvement</label>
         <div class="action-toggle">
@@ -399,7 +402,7 @@
         <h2>💊 Stock Pharmacie</h2>
         <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
           <label style="margin-top:0;">Nom du produit</label>
-          <input type="text" id="pharmaName" list="pharmaDatalist" placeholder="Doliprane, Sérum phy..." style="background: white;">
+          <input type="text" id="pharmaName" list="pharmaDatalist" placeholder="Doliprane, Sérum phy..." style="background: white;" oninput="prefillPharma()">
           <datalist id="pharmaDatalist"></datalist>
           <div style="display: flex; gap: 12px;">
             <div style="flex: 1;"><label>Quantité</label><input type="number" id="pharmaQty" placeholder="ex: 2" style="background: white;"></div>
@@ -446,6 +449,7 @@
     <div class="card">
       <h2>💾 Sauvegarde (CSV)</h2>
       <p class="meta">Exporte toutes les données brutes dans un fichier Excel.</p>
+      <p class="meta" id="lastExportInfo" style="margin-top:8px;">Dernier export : jamais</p>
       <button onclick="exportCSV()" class="secondary">📊 Exporter en CSV</button>
     </div>
     
@@ -455,6 +459,7 @@
     </div>
     
     <button onclick="showView('dashboard')" class="secondary" style="margin-bottom: 20px;">Retour à l'accueil</button>
+    <div class="version-tag">Version 1.1 — Améliorée</div>
   </div>
 
   <!-- Barre de navigation -->
@@ -484,6 +489,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+
+// Activer la persistance hors-ligne
+db.enablePersistence({ synchronizeTabs: true })
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Persistance : plusieurs onglets ouverts');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Persistance non supportée par ce navigateur');
+    }
+  });
 
 // ============ CITATIONS & ACTIVITÉS DU JOUR ============
 const DAILY_QUOTES = [
@@ -536,9 +551,28 @@ let state = {
 
 let currentEstablishment = null;
 
-function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+// ============ HELPERS OPÉRATEUR ============
+const OPERATOR_KEY = 'creche_operator';
+function getSavedOperator() {
+  return localStorage.getItem(OPERATOR_KEY) || '';
+}
+function saveOperator(name) {
+  if (name && name.trim()) {
+    localStorage.setItem(OPERATOR_KEY, name.trim());
+  }
+}
+
+function toast(msg) { 
+  const t = document.getElementById('toast'); 
+  t.textContent = msg; 
+  t.classList.add('show'); 
+  setTimeout(() => t.classList.remove('show'), 2800); 
+}
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function fmtDate(iso) { const d = new Date(iso); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); }
+function fmtDate(iso) { 
+  const d = new Date(iso); 
+  return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'}); 
+}
 function startOfToday() { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
 function startOfWeek() { const d = new Date(); d.setDate(d.getDate()-7); d.setHours(0,0,0,0); return d.getTime(); }
 
@@ -548,10 +582,14 @@ function compressImage(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas'); const MAX_WIDTH = 600; const scale = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH; canvas.height = img.height * scale;
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 500;
+        const scale = Math.min(1, MAX_WIDTH / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.55));
       };
       img.src = e.target.result;
     };
@@ -580,7 +618,11 @@ function loginUser() {
   const password = document.getElementById('loginPassword').value;
   const errorMsg = document.getElementById('loginError');
   
-  if (!email || !password) { errorMsg.textContent = "Veuillez remplir tous les champs."; errorMsg.style.display = 'block'; return; }
+  if (!email || !password) { 
+    errorMsg.textContent = "Veuillez remplir tous les champs."; 
+    errorMsg.style.display = 'block'; 
+    return; 
+  }
   errorMsg.style.display = 'none';
   
   auth.signInWithEmailAndPassword(email, password).catch((error) => {
@@ -618,6 +660,7 @@ function checkEstablishment() {
     document.getElementById('app-content').style.display = 'block';
     document.getElementById('headerTitle').textContent = "Espace " + currentEstablishment;
     document.getElementById('current-est-display').textContent = currentEstablishment;
+    updateLastExportDisplay();
     initApp();
   } else {
     document.getElementById('establishment-screen').style.display = 'flex';
@@ -632,6 +675,7 @@ function selectEstablishment(name) {
   document.getElementById('app-content').style.display = 'block';
   document.getElementById('headerTitle').textContent = "Espace " + currentEstablishment;
   document.getElementById('current-est-display').textContent = currentEstablishment;
+  updateLastExportDisplay();
   initApp();
 }
 
@@ -639,6 +683,18 @@ function changeEstablishment() {
   if(confirm("Voulez-vous changer d'établissement ?")) {
     localStorage.removeItem('creche_establishment');
     window.location.reload();
+  }
+}
+
+function updateLastExportDisplay() {
+  const el = document.getElementById('lastExportInfo');
+  if (!el || !currentEstablishment) return;
+  const last = localStorage.getItem('creche_lastExport_' + currentEstablishment);
+  if (!last) {
+    el.textContent = "Dernier export : jamais";
+  } else {
+    const d = new Date(parseInt(last));
+    el.textContent = "Dernier export : " + d.toLocaleDateString('fr-FR') + " à " + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
   }
 }
 
@@ -731,7 +787,7 @@ function renderDashboard() {
   state.temps.forEach(t => { if (new Date(t.ts).getTime() > now - 7*24*h && t.outOfRange) alerts.push(`🌡️ ${t.label} : ${t.value}°C (HORS NORME)`); });
   state.samples.forEach(s => { if (now - new Date(s.ts).getTime() > 5*24*h) alerts.push(`🍽️ Plat témoin "${s.dish}" : à retirer`); });
 
-  // Ajout du rappel d'exportation dans les alertes
+  // Rappel d'exportation
   let isExportNeeded = checkExportReminderNeeded();
   if (isExportNeeded) {
     alerts.push(`📅 <b>Rappel : Pensez à faire votre sauvegarde hebdomadaire !</b><br><span style="font-size:12px; font-weight:normal; text-decoration:underline; cursor:pointer;" onclick="showView('admin')">Cliquez ici pour exporter vos données</span>`);
@@ -745,7 +801,6 @@ function renderDashboard() {
     list.innerHTML = '<div class="empty">Aucune alerte ✅</div>';
   } else {
     list.innerHTML = alerts.map(a => {
-      // Style spécifique pour le rappel d'export
       let style = "background:#fff5f5; padding: 12px; border-radius: 8px; margin-bottom:8px; border:none;";
       let titleStyle = "color:var(--danger);";
       if (a.includes('Rappel')) {
@@ -757,7 +812,6 @@ function renderDashboard() {
   }
 }
 
-// Vérifie si un export est nécessaire
 function checkExportReminderNeeded() {
   const lastExport = localStorage.getItem('creche_lastExport_' + currentEstablishment);
   if (!lastExport) return true; 
@@ -771,9 +825,37 @@ function updateDatalists() {
   document.getElementById('pharmaDatalist').innerHTML = state.pharma.map(p => `<option value="${p.name}">`).join('');
 }
 
+// Pré-remplissage intelligent des stocks
+function prefillStock(category) {
+  const prefix = category === 'food' ? 'food' : 'diaper';
+  const name = document.getElementById(prefix + 'Name').value.trim().toLowerCase();
+  if (!name) return;
+  const list = category === 'food' ? state.foods : state.diapers;
+  const existing = list.find(i => i.name.toLowerCase() === name);
+  if (existing) {
+    document.getElementById(prefix + 'Qty').value = existing.qty;
+    document.getElementById(prefix + 'Min').value = existing.min;
+    document.getElementById(prefix + 'ActSet').checked = true;
+  }
+}
+
+function prefillPharma() {
+  const name = document.getElementById('pharmaName').value.trim().toLowerCase();
+  if (!name) return;
+  const existing = state.pharma.find(i => i.name.toLowerCase() === name);
+  if (existing) {
+    document.getElementById('pharmaQty').value = existing.qty;
+    if (existing.exp) document.getElementById('pharmaExp').value = existing.exp;
+  }
+}
+
 /* --- TEMPÉRATURES --- */
 let tempFilter = 'today';
-function filterTemp(f) { tempFilter = f; document.querySelectorAll('#tempTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f)); renderTemp(); }
+function filterTemp(f) { 
+  tempFilter = f; 
+  document.querySelectorAll('#tempTabs button').forEach((b,i) => b.classList.toggle('active', ['today','week','all'][i]===f)); 
+  renderTemp(); 
+}
 function renderTemp() {
   let filtered = state.temps;
   if (tempFilter === 'today') filtered = filtered.filter(t => new Date(t.ts).getTime() >= startOfToday());
@@ -788,51 +870,121 @@ function renderTemp() {
 }
 function updateTempFields() {
   const type = document.getElementById('tempType').value;
-  document.getElementById('fields-daily').style.display = 'none'; document.getElementById('fields-delivery').style.display = 'none'; document.getElementById('fields-dish').style.display = 'none';
+  document.getElementById('fields-daily').style.display = 'none'; 
+  document.getElementById('fields-delivery').style.display = 'none'; 
+  document.getElementById('fields-dish').style.display = 'none';
   if (type === 'daily') document.getElementById('fields-daily').style.display = 'block';
   else if (type === 'delivery') document.getElementById('fields-delivery').style.display = 'block';
   else document.getElementById('fields-dish').style.display = 'block';
 }
 function openTempForm() {
-  document.getElementById('tempFormCard').style.display = 'block'; document.getElementById('tempType').value = 'daily';
+  document.getElementById('tempFormCard').style.display = 'block'; 
+  document.getElementById('tempType').value = 'daily';
   document.getElementById('tempEquip').innerHTML = state.equipment.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
-  document.getElementById('tempValue').value = ''; document.getElementById('tempOperator').value = ''; document.getElementById('tempPhoto').value = ''; updateTempFields();
+  document.getElementById('tempValue').value = ''; 
+  document.getElementById('tempOperator').value = getSavedOperator(); 
+  document.getElementById('tempPhoto').value = ''; 
+  document.getElementById('tempAction').value = '';
+  updateTempFields();
   document.getElementById('tempFormCard').scrollIntoView({behavior:'smooth'});
 }
 function closeTempForm() { document.getElementById('tempFormCard').style.display = 'none'; }
 async function saveTemp() {
-  const type = document.getElementById('tempType').value; const value = parseFloat(document.getElementById('tempValue').value); const operator = document.getElementById('tempOperator').value.trim();
+  const type = document.getElementById('tempType').value; 
+  const value = parseFloat(document.getElementById('tempValue').value); 
+  const operator = document.getElementById('tempOperator').value.trim();
   if (isNaN(value) || !operator) return toast('⚠️ Champs manquants');
-  let label = ''; let outOfRange = false;
-  if (type === 'daily') { const eq = state.equipment.find(e => e.name === document.getElementById('tempEquip').value); label = eq.name; outOfRange = value < eq.min || value > eq.max; }
-  else if (type === 'delivery') { const p = document.getElementById('tempProductType').value; label = `Livraison ${document.getElementById('tempSupplier').value||'?'}`; if(p==='frais') outOfRange = value > 4; if(p==='surgelé') outOfRange = value > -18; }
-  else if (type === 'preheat') { label = `Avant chauffe : ${document.getElementById('tempDish').value||'?'}`; outOfRange = value > 4; }
-  else if (type === 'reheat') { label = `Remise chauffe : ${document.getElementById('tempDish').value||'?'}`; outOfRange = value < 63; }
-  let photoBase64 = null; const pInput = document.getElementById('tempPhoto');
-  if (pInput.files && pInput.files[0]) { toast('📸 Traitement...'); photoBase64 = await compressImage(pInput.files[0]); }
   
-  db.collection('temps').add({ establishment: currentEstablishment, ts: new Date().toISOString(), label, value, operator, outOfRange, photo: photoBase64 })
-    .then(() => { toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); closeTempForm(); })
-    .catch(e => toast('❌ Erreur: ' + e.message));
+  let label = ''; 
+  let outOfRange = false;
+  if (type === 'daily') { 
+    const eq = state.equipment.find(e => e.name === document.getElementById('tempEquip').value); 
+    label = eq.name; 
+    outOfRange = value < eq.min || value > eq.max; 
+  }
+  else if (type === 'delivery') { 
+    const p = document.getElementById('tempProductType').value; 
+    label = `Livraison ${document.getElementById('tempSupplier').value||'?'}`; 
+    if(p==='frais') outOfRange = value > 4; 
+    if(p==='surgelé') outOfRange = value > -18; 
+  }
+  else if (type === 'preheat') { 
+    label = `Avant chauffe : ${document.getElementById('tempDish').value||'?'}`; 
+    outOfRange = value > 4; 
+  }
+  else if (type === 'reheat') { 
+    label = `Remise chauffe : ${document.getElementById('tempDish').value||'?'}`; 
+    outOfRange = value < 63; 
+  }
+  
+  let photoBase64 = null; 
+  const pInput = document.getElementById('tempPhoto');
+  if (pInput.files && pInput.files[0]) { 
+    toast('📸 Traitement photo...'); 
+    photoBase64 = await compressImage(pInput.files[0]); 
+  }
+  
+  const action = document.getElementById('tempAction').value.trim() || null;
+  
+  db.collection('temps').add({ 
+    establishment: currentEstablishment, 
+    ts: new Date().toISOString(), 
+    label, 
+    value, 
+    operator, 
+    outOfRange, 
+    photo: photoBase64,
+    action
+  })
+  .then(() => { 
+    saveOperator(operator);
+    toast(outOfRange ? '⚠️ Enregistré (HORS NORME)' : '✅ Enregistré'); 
+    closeTempForm(); 
+  })
+  .catch(e => toast('❌ Erreur: ' + e.message));
 }
 
 /* --- PLATS TÉMOINS --- */
 function renderSamples() {
-  const list = document.getElementById('sampleList'); if (state.samples.length === 0) { list.innerHTML = '<div class="empty">Aucun plat</div>'; return; }
+  const list = document.getElementById('sampleList'); 
+  if (state.samples.length === 0) { list.innerHTML = '<div class="empty">Aucun plat</div>'; return; }
   const now = Date.now();
   list.innerHTML = state.samples.map(s => {
     const days = Math.floor((now - new Date(s.ts).getTime()) / (24*3600*1000));
     const badge = days > 5 ? '<span class="alert-badge badge-danger">À RETIRER</span>' : `<span class="alert-badge badge-ok">J+${days}</span>`;
-    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g</div></div><button class="small danger" onclick="deleteDoc('samples', '${s.id}')">✕</button></div>`;
+    return `<div class="list-item"><div class="info"><div class="title">${s.dish} ${badge}</div><div class="detail">${fmtDate(s.ts)} • ${s.qty}g • ${s.operator || ''}</div></div><button class="small danger" onclick="deleteDoc('samples', '${s.id}')">✕</button></div>`;
   }).join('');
 }
-function openSampleForm() { document.getElementById('sampleFormCard').style.display = 'block'; document.getElementById('sampleDate').value = todayStr(); document.getElementById('sampleDish').value = ''; document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'}); }
+function openSampleForm() { 
+  document.getElementById('sampleFormCard').style.display = 'block'; 
+  document.getElementById('sampleDate').value = todayStr(); 
+  document.getElementById('sampleDish').value = ''; 
+  document.getElementById('sampleQty').value = '100';
+  document.getElementById('sampleOperator').value = getSavedOperator();
+  document.getElementById('sampleFormCard').scrollIntoView({behavior:'smooth'}); 
+}
 function closeSampleForm() { document.getElementById('sampleFormCard').style.display = 'none'; }
 function saveSample() {
-  if (!document.getElementById('sampleDish').value.trim()) return toast('⚠️ Nom du plat ?');
-  db.collection('samples').add({ establishment: currentEstablishment, ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), dish: document.getElementById('sampleDish').value.trim(), qty: parseInt(document.getElementById('sampleQty').value) || 100 })
-    .then(() => { toast('✅ Enregistré'); closeSampleForm(); })
-    .catch(e => toast('❌ Erreur: ' + e.message));
+  const dish = document.getElementById('sampleDish').value.trim();
+  const qty = parseInt(document.getElementById('sampleQty').value) || 100;
+  const operator = document.getElementById('sampleOperator').value.trim();
+  
+  if (!dish) return toast('⚠️ Nom du plat ?');
+  if (!operator) return toast('⚠️ Opérateur ?');
+  
+  db.collection('samples').add({ 
+    establishment: currentEstablishment, 
+    ts: new Date(document.getElementById('sampleDate').value + 'T12:00').toISOString(), 
+    dish, 
+    qty,
+    operator
+  })
+  .then(() => { 
+    saveOperator(operator);
+    toast('✅ Enregistré'); 
+    closeSampleForm(); 
+  })
+  .catch(e => toast('❌ Erreur: ' + e.message));
 }
 
 /* --- STOCKS --- */
@@ -841,19 +993,24 @@ async function saveStockItem(category) {
   const name = document.getElementById(prefix + 'Name').value.trim();
   const qty = parseInt(document.getElementById(prefix + 'Qty').value);
   const min = parseInt(document.getElementById(prefix + 'Min').value);
-  let action = 'add'; if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
-  const operator = document.getElementById(prefix + 'Operator').value.trim() || 'Inconnu';
+  let action = 'add'; 
+  if (document.getElementById(prefix + 'ActSet').checked) action = 'set';
+  const operator = document.getElementById(prefix + 'Operator').value.trim() || getSavedOperator() || 'Inconnu';
   const photoInput = document.getElementById(prefix + 'Photo');
 
   if (!name) return toast('⚠️ Nom du produit ?');
   if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
   
   let photoBase64 = null;
-  if (photoInput.files && photoInput.files[0]) { toast('📸 Traitement photo...'); photoBase64 = await compressImage(photoInput.files[0]); }
+  if (photoInput.files && photoInput.files[0]) { 
+    toast('📸 Traitement photo...'); 
+    photoBase64 = await compressImage(photoInput.files[0]); 
+  }
 
   let list = category === 'food' ? state.foods : state.diapers;
   let existingItem = list.find(i => i.name.toLowerCase() === name.toLowerCase());
-  let logMessage = ""; let logType = "in";
+  let logMessage = ""; 
+  let logType = "in";
   const collectionName = category === 'food' ? 'foods' : 'diapers';
 
   if (existingItem) {
@@ -867,19 +1024,31 @@ async function saveStockItem(category) {
   } else {
     const finalMin = isNaN(min) ? 3 : min;
     db.collection(collectionName).add({ establishment: currentEstablishment, name, qty, min: finalMin });
-    logMessage = `${operator} a créé ${name} (Stock: ${qty})`; logType = "create";
+    logMessage = `${operator} a créé ${name} (Stock: ${qty})`; 
+    logType = "create";
   }
 
-  db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: category, itemName: name, type: logType, qty: qty, operator: operator, message: logMessage, photo: photoBase64 })
-    .then(() => {
-      toast(`✅ Mouvement enregistré !`);
-      document.getElementById(prefix + 'Name').value = '';
-      document.getElementById(prefix + 'Qty').value = '';
-      document.getElementById(prefix + 'Min').value = '';
-      document.getElementById(prefix + 'Operator').value = '';
-      document.getElementById(prefix + 'Photo').value = '';
-      document.getElementById(prefix + 'ActAdd').checked = true;
-    });
+  db.collection('stockLogs').add({ 
+    establishment: currentEstablishment, 
+    ts: new Date().toISOString(), 
+    category: category, 
+    itemName: name, 
+    type: logType, 
+    qty: qty, 
+    operator: operator, 
+    message: logMessage, 
+    photo: photoBase64 
+  })
+  .then(() => {
+    saveOperator(operator);
+    toast(`✅ Mouvement enregistré !`);
+    document.getElementById(prefix + 'Name').value = '';
+    document.getElementById(prefix + 'Qty').value = '';
+    document.getElementById(prefix + 'Min').value = '';
+    document.getElementById(prefix + 'Operator').value = getSavedOperator();
+    document.getElementById(prefix + 'Photo').value = '';
+    document.getElementById(prefix + 'ActAdd').checked = true;
+  });
 }
 
 function renderStocks() {
@@ -899,7 +1068,7 @@ function renderStocks() {
   const renderLogs = (cat) => {
     const logs = state.stockLogs.filter(l => l.category === cat);
     if(logs.length === 0) return '<div class="empty">Aucun mouvement</div>';
-    return logs.slice(0, 20).map(l => {
+    return logs.slice(0, 25).map(l => {
       const photoHtml = l.photo ? `<br><img src="${l.photo}" class="photo-thumb" onclick="window.open('${l.photo}', '_blank')">` : '';
       return `<div class="history-log"><strong>${fmtDate(l.ts)}</strong> : ${l.message} ${photoHtml}</div>`;
     }).join('');
@@ -914,8 +1083,19 @@ function updateStockQty(category, id, delta) {
   if (item) {
     let newQty = Math.max(0, item.qty + delta);
     const collectionName = category === 'food' ? 'foods' : 'diapers';
+    const operator = getSavedOperator() || "Ajustement rapide";
     db.collection(collectionName).doc(id).update({ qty: newQty });
-    db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: category, itemName: item.name, type: delta > 0 ? 'in' : 'out', qty: Math.abs(delta), operator: "Ajustement rapide", message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, photo: null });
+    db.collection('stockLogs').add({ 
+      establishment: currentEstablishment, 
+      ts: new Date().toISOString(), 
+      category: category, 
+      itemName: item.name, 
+      type: delta > 0 ? 'in' : 'out', 
+      qty: Math.abs(delta), 
+      operator: operator, 
+      message: `Ajustement rapide : ${delta > 0 ? '+' : '-'}${Math.abs(delta)} ${item.name}`, 
+      photo: null 
+    });
   }
 }
 
@@ -924,7 +1104,7 @@ function savePharmaItem() {
   const name = document.getElementById('pharmaName').value.trim();
   const qty = parseInt(document.getElementById('pharmaQty').value);
   const exp = document.getElementById('pharmaExp').value;
-  const operator = document.getElementById('pharmaOperator').value.trim() || 'Inconnu';
+  const operator = document.getElementById('pharmaOperator').value.trim() || getSavedOperator() || 'Inconnu';
 
   if (!name) return toast('⚠️ Nom du produit ?');
   if (isNaN(qty) || qty < 0) return toast('⚠️ Quantité valide ?');
@@ -935,17 +1115,28 @@ function savePharmaItem() {
     if (exp) updateData.exp = exp;
     db.collection('pharma').doc(existingItem.id).update(updateData);
   } else {
-    db.collection('pharma').add({ establishment: currentEstablishment, name, qty, exp });
+    db.collection('pharma').add({ establishment: currentEstablishment, name, qty, exp: exp || null });
   }
   
-  db.collection('stockLogs').add({ establishment: currentEstablishment, ts: new Date().toISOString(), category: 'pharma', itemName: name, type: 'in', qty: qty, operator: operator, message: `${operator} a mis à jour ${name} (Qté: ${qty})`, photo: null })
-    .then(() => {
-      toast(`✅ Pharmacie mise à jour !`);
-      document.getElementById('pharmaName').value = '';
-      document.getElementById('pharmaQty').value = '';
-      document.getElementById('pharmaExp').value = '';
-      document.getElementById('pharmaOperator').value = '';
-    });
+  db.collection('stockLogs').add({ 
+    establishment: currentEstablishment, 
+    ts: new Date().toISOString(), 
+    category: 'pharma', 
+    itemName: name, 
+    type: 'in', 
+    qty: qty, 
+    operator: operator, 
+    message: `${operator} a mis à jour ${name} (Qté: ${qty})`, 
+    photo: null 
+  })
+  .then(() => {
+    saveOperator(operator);
+    toast(`✅ Pharmacie mise à jour !`);
+    document.getElementById('pharmaName').value = '';
+    document.getElementById('pharmaQty').value = '';
+    document.getElementById('pharmaExp').value = '';
+    document.getElementById('pharmaOperator').value = getSavedOperator();
+  });
 }
 
 function renderPharma() {
@@ -953,7 +1144,8 @@ function renderPharma() {
   if (state.pharma.length === 0) { list.innerHTML = '<div class="empty">Aucun produit pharmaceutique</div>'; return; }
   const today = new Date().setHours(0,0,0,0);
   list.innerHTML = state.pharma.map(p => {
-    let isAlert = false; let expBadge = '';
+    let isAlert = false; 
+    let expBadge = '';
     if (p.exp) {
       const expDate = new Date(p.exp).getTime();
       const daysLeft = Math.floor((expDate - today) / (1000*60*60*24));
@@ -979,15 +1171,34 @@ function updatePharmaQty(id, delta) {
 
 /* --- NETTOYAGE --- */
 function renderCleans() {
-  const list = document.getElementById('cleanList'); if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
-  list.innerHTML = state.cleans.slice(0, 20).map(c => `<div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteDoc('cleans', '${c.id}')">✕</button></div>`).join('');
+  const list = document.getElementById('cleanList'); 
+  if (state.cleans.length === 0) { list.innerHTML = '<div class="empty">Aucun nettoyage</div>'; return; }
+  list.innerHTML = state.cleans.slice(0, 25).map(c => `<div class="list-item"><div class="info"><div class="title">${c.zone} — ${c.task}</div><div class="detail">${fmtDate(c.ts)} • ${c.operator}</div></div><button class="small danger" onclick="deleteDoc('cleans', '${c.id}')">✕</button></div>`).join('');
 }
-function openCleanForm() { document.getElementById('cleanFormCard').style.display = 'block'; document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'}); }
+function openCleanForm() { 
+  document.getElementById('cleanFormCard').style.display = 'block'; 
+  document.getElementById('cleanTask').value = '';
+  document.getElementById('cleanOperator').value = getSavedOperator();
+  document.getElementById('cleanFormCard').scrollIntoView({behavior:'smooth'}); 
+}
 function closeCleanForm() { document.getElementById('cleanFormCard').style.display = 'none'; }
 function saveClean() {
-  if (!document.getElementById('cleanTask').value.trim() || !document.getElementById('cleanOperator').value.trim()) return toast('⚠️ Champs manquants');
-  db.collection('cleans').add({ establishment: currentEstablishment, ts: new Date().toISOString(), zone: document.getElementById('cleanZone').value, task: document.getElementById('cleanTask').value.trim(), operator: document.getElementById('cleanOperator').value.trim() })
-    .then(() => { toast('✅ Enregistré'); closeCleanForm(); });
+  const task = document.getElementById('cleanTask').value.trim();
+  const operator = document.getElementById('cleanOperator').value.trim();
+  if (!task || !operator) return toast('⚠️ Champs manquants');
+  
+  db.collection('cleans').add({ 
+    establishment: currentEstablishment, 
+    ts: new Date().toISOString(), 
+    zone: document.getElementById('cleanZone').value, 
+    task, 
+    operator 
+  })
+  .then(() => { 
+    saveOperator(operator);
+    toast('✅ Enregistré'); 
+    closeCleanForm(); 
+  });
 }
 
 // SUPPRESSION GÉNÉRIQUE
@@ -1017,9 +1228,9 @@ function generatePDF() {
   }
   html += `</div>`;
 
-  html += `<div class="report-section"><h2>2. État des Stocks</h2><table class="report-table"><tr><th>Catégorie</th><th>Produit</th><th>Quantité restante</th><th>Statut</th></tr>`;
-  state.foods.forEach(s => { html += `<tr><td>Aliment</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
-  state.diapers.forEach(s => { html += `<tr><td>Couche/Hygiène</td><td>${s.name}</td><td>${s.qty}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
+  html += `<div class="report-section"><h2>2. État des Stocks</h2><table class="report-table"><tr><th>Catégorie</th><th>Produit</th><th>Quantité restante</th><th>Seuil</th><th>Statut</th></tr>`;
+  state.foods.forEach(s => { html += `<tr><td>Aliment</td><td>${s.name}</td><td>${s.qty}</td><td>${s.min}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
+  state.diapers.forEach(s => { html += `<tr><td>Couche/Hygiène</td><td>${s.name}</td><td>${s.qty}</td><td>${s.min}</td><td>${s.qty <= s.min ? '<span class="danger-text">Stock bas</span>' : 'OK'}</td></tr>`; });
   html += `</table></div>`;
 
   html += `<div class="report-section"><h2>3. Pharmacie & Soins</h2><table class="report-table"><tr><th>Produit</th><th>Quantité</th><th>Date de péremption</th><th>Statut</th></tr>`;
@@ -1039,8 +1250,8 @@ function generatePDF() {
   html += `<div class="report-section"><h2>4. Plats Témoins</h2>`;
   if(recentSamples.length === 0) html += `<p>Aucun plat témoin enregistré récemment.</p>`;
   else {
-    html += `<table class="report-table"><tr><th>Date</th><th>Plat</th><th>Quantité</th></tr>`;
-    recentSamples.forEach(s => { html += `<tr><td>${new Date(s.ts).toLocaleDateString('fr-FR')}</td><td>${s.dish}</td><td>${s.qty}g</td></tr>`; });
+    html += `<table class="report-table"><tr><th>Date</th><th>Plat</th><th>Quantité</th><th>Opérateur</th></tr>`;
+    recentSamples.forEach(s => { html += `<tr><td>${new Date(s.ts).toLocaleDateString('fr-FR')}</td><td>${s.dish}</td><td>${s.qty}g</td><td>${s.operator || '-'}</td></tr>`; });
     html += `</table>`;
   }
   html += `</div>`;
@@ -1058,28 +1269,35 @@ function generatePDF() {
   document.getElementById('print-report').innerHTML = html;
   
   localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
-  renderDashboard(); // Rafraîchit l'accueil pour enlever l'alerte d'export
+  updateLastExportDisplay();
+  renderDashboard();
 
   toast('📄 Préparation du PDF...');
   setTimeout(() => { window.print(); }, 500);
 }
 
 function exportCSV() {
-  const rows = [['Module', 'Date', 'Détail']];
-  state.temps.forEach(t => rows.push(['HACCP Temp', t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'}) - ${t.operator}`]));
-  state.samples.forEach(s => rows.push(['HACCP Témoin', s.ts, `${s.dish} - ${s.qty}g`]));
-  state.foods.forEach(s => rows.push(['Stock Repas', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
-  state.diapers.forEach(s => rows.push(['Stock Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`]));
-  state.pharma.forEach(p => rows.push(['Pharmacie', '-', `${p.name} : Reste ${p.qty} (Péremption: ${p.exp||'-'})`]));
-  state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, `${l.message} (Photo: ${l.photo ? 'Oui' : 'Non'})`]));
-  state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task} - ${c.operator}`]));
+  const rows = [['Module', 'Date', 'Détail', 'Opérateur']];
+  state.temps.forEach(t => rows.push(['HACCP Temp', t.ts, `${t.label}: ${t.value}°C (${t.outOfRange?'HORS NORME':'OK'})`, t.operator || '']));
+  state.samples.forEach(s => rows.push(['HACCP Témoin', s.ts, `${s.dish} - ${s.qty}g`, s.operator || '']));
+  state.foods.forEach(s => rows.push(['Stock Repas', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`, '']));
+  state.diapers.forEach(s => rows.push(['Stock Couches', '-', `${s.name} : Reste ${s.qty} (Seuil ${s.min})`, '']));
+  state.pharma.forEach(p => rows.push(['Pharmacie', '-', `${p.name} : Reste ${p.qty} (Péremption: ${p.exp||'-'})`, '']));
+  state.stockLogs.forEach(l => rows.push(['Mouvement Stock', l.ts, l.message, l.operator || '']));
+  state.cleans.forEach(c => rows.push(['Nettoyage', c.ts, `${c.zone}: ${c.task}`, c.operator || '']));
 
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `creche-${currentEstablishment}-${todayStr()}.csv`; a.click(); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(blob); 
+  const a = document.createElement('a'); 
+  a.href = url; 
+  a.download = `creche-${currentEstablishment}-${todayStr()}.csv`; 
+  a.click(); 
+  URL.revokeObjectURL(url);
   
   localStorage.setItem('creche_lastExport_' + currentEstablishment, Date.now());
-  renderDashboard(); // Rafraîchit l'accueil pour enlever l'alerte d'export
+  updateLastExportDisplay();
+  renderDashboard();
 
   toast('📥 Export CSV téléchargé !');
 }
